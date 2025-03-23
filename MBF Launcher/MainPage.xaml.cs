@@ -19,6 +19,7 @@ namespace MBF_Launcher
         public static class PageStrings
         {
             public const string DisconnectingDevices = "Disconnecting Devices";
+            public const string EnablingWirelessDebugging = "Enabling Wireless Debugging";
             public const string ConnectingOnPort = "Connecting on Port {0}";
             public const string GettingDevices = "Getting Devices";
             public const string SettingTcpIpMode = "Setting TCP IP Mode";
@@ -80,7 +81,7 @@ namespace MBF_Launcher
         }
 
         /// <summary>
-        /// Checks if we have our needed permissions
+        /// Checks if we have our needed permissions by trying to set the Wi-Fi debugging state
         /// </summary>
         /// <returns></returns>
         private bool HasPermission()
@@ -190,7 +191,7 @@ namespace MBF_Launcher
         #region Page State
         enum PageState
         {
-            Initializing, Authorization, Pairing, ConnectDevice
+            Initializing, Authorization, WirelessDebugging, Pairing, ConnectDevice
         }
 
         private PageState State
@@ -204,6 +205,9 @@ namespace MBF_Launcher
 
                 authorizationLayout.IsVisible = false;
                 authorizationLayout.IsEnabled = true;
+
+                wifiLayout.IsVisible = false;
+                wifiLayout.IsEnabled = true;
 
                 pairingLayout.IsVisible = false;
                 pairingLayout.IsEnabled = true;
@@ -226,6 +230,11 @@ namespace MBF_Launcher
                         statusLabel.Text = "Please allow the connection request";
                         statusLabel.IsVisible = true;
                         authorizationLayout.IsVisible = true;
+                        break;
+
+                    case PageState.WirelessDebugging:
+                        statusLabel.IsVisible = true;
+                        wifiLayout.IsVisible = true;
                         break;
 
                     case PageState.Pairing:
@@ -266,13 +275,16 @@ namespace MBF_Launcher
             statusLabel.Text = PageStrings.GettingDevices;
             devices = await AdbWrapper.GetDevicesAsync();
 
-            if (authorizedDevices.Length == 0 && unauthorizedDevices.Length == 0)
+            if (authorizedDevices.Length == 0 && unauthorizedDevices.Length == 0 && HasPermission())
             {
                 try
                 {
+                    State = PageState.WirelessDebugging;
+                    statusLabel.Text = PageStrings.EnablingWirelessDebugging;
                     await EnableWifiDebug();
                 }
                 catch (Exception) { }
+                State = PageState.Initializing;
             }
 
             while (authorizedDevices.Length == 0 && unauthorizedDevices.Length > 0)
@@ -510,6 +522,11 @@ namespace MBF_Launcher
         private void exitApp_Clicked(object sender, EventArgs e)
         {
             Application.Current?.Quit();
+        }
+
+        private void cycleWifiDebugging_Clicked(object sender, EventArgs e)
+        {
+            _ = EnableWifiDebug();
         }
     }
 

@@ -16,6 +16,18 @@
             <VerticalStackLayout
                 x:Name="initializingLayout"
                 IsVisible="False" />
+
+            <VerticalStackLayout
+                x:Name="wifiLayout"
+                IsVisible="False"
+                Spacing="25" 
+                Padding="0,25,0,0">
+                <Label>If you didn't accept a wireless debugging request, or one didn't appear, make sure you're connected to a wireless network.</Label>
+                <Button
+                    x:Name="cycleWifiDebugging"
+                    Clicked="cycleWifiDebugging_Clicked"
+                    Text="Try Again"  />
+            </VerticalStackLayout>
             <VerticalStackLayout
                 x:Name="authorizationLayout"
                 IsVisible="False">
