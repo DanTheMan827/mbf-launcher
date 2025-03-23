@@ -1,0 +1,3 @@
+[submodule "OnDeviceADB"]
+	path = OnDeviceADB
+	url = https://github.com/DanTheMan827/OnDeviceADB.git
