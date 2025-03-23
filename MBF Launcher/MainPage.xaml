@@ -9,11 +9,12 @@
         <VerticalStackLayout
             Padding="30,30"
             Spacing="0">
-            <ImageButton x:Name="Fish" Source="fish.png" Clicked="Fish_Clicked" />
-            <Label
-                x:Name="statusLabel"
-                />
-            <Button x:Name="openBrowserButton" Clicked="openBrowserButton_Clicked" IsVisible="False" />
+            <VerticalStackLayout Spacing="25">
+                <ImageButton x:Name="Fish" Source="fish.png" Clicked="Fish_Clicked" />
+                <Label x:Name="statusLabel" />
+                <Button x:Name="openBrowserButton" Clicked="openBrowserButton_Clicked" IsVisible="False" Text="Open Browser" />
+            </VerticalStackLayout>
+            
             <VerticalStackLayout
                 x:Name="initializingLayout"
                 IsVisible="False" />
