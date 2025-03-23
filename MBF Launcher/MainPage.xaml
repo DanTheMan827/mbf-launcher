@@ -13,6 +13,7 @@
             <Label
                 x:Name="statusLabel"
                 />
+            <Button x:Name="openBrowserButton" Clicked="openBrowserButton_Clicked" IsVisible="False" />
             <VerticalStackLayout
                 x:Name="initializingLayout"
                 IsVisible="False" />
@@ -112,6 +113,7 @@
                 <Label>Developer Mode</Label>
                 <Button x:Name="TcpIpMode" Clicked="TcpIpMode_Clicked" Text="TCP IP Mode" />
                 <Button Clicked="restartAdbButton_Clicked" Text="Restart ADB" />
+                <Button Clicked="launchSettingsButton_Clicked" Text="Launch Settings" />
                 <Button Clicked="exitApp_Clicked" Text="Exit" />
             </VerticalStackLayout>
         </VerticalStackLayout>

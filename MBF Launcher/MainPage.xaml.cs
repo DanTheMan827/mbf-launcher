@@ -121,6 +121,7 @@ namespace MBF_Launcher
 
             if (port > 0)
             {
+                State = PageState.Initializing;
                 statusLabel.Text = String.Format(PageStrings.ConnectingOnPort, port);
                 var device = await AdbWrapper.ConnectAsync("127.0.0.1", port);
 
@@ -201,21 +202,21 @@ namespace MBF_Launcher
                 statusLabel.Text = "";
                 statusLabel.IsVisible = false;
                 initializingLayout.IsVisible = false;
-                initializingLayout.IsEnabled = true;
+                initializingLayout.IsEnabled = false;
 
                 authorizationLayout.IsVisible = false;
-                authorizationLayout.IsEnabled = true;
+                authorizationLayout.IsEnabled = false;
 
                 wifiLayout.IsVisible = false;
-                wifiLayout.IsEnabled = true;
+                wifiLayout.IsEnabled = false;
 
                 pairingLayout.IsVisible = false;
-                pairingLayout.IsEnabled = true;
+                pairingLayout.IsEnabled = false;
                 portEntry.Text = "";
                 pairingCodeEntry.Text = "";
 
                 connectLayout.IsVisible = false;
-                connectLayout.IsEnabled = true;
+                connectLayout.IsEnabled = false;
                 debugPortEntry.Text = "";
 
 
@@ -223,6 +224,7 @@ namespace MBF_Launcher
                 {
                     case PageState.Initializing:
                         initializingLayout.IsVisible = true;
+                        initializingLayout.IsEnabled = true;
                         statusLabel.IsVisible = true;
                         break;
 
@@ -230,19 +232,23 @@ namespace MBF_Launcher
                         statusLabel.Text = "Please allow the connection request";
                         statusLabel.IsVisible = true;
                         authorizationLayout.IsVisible = true;
+                        authorizationLayout.IsEnabled = true;
                         break;
 
                     case PageState.WirelessDebugging:
                         statusLabel.IsVisible = true;
                         wifiLayout.IsVisible = true;
+                        wifiLayout.IsEnabled = true;
                         break;
 
                     case PageState.Pairing:
                         pairingLayout.IsVisible = true;
+                        pairingLayout.IsEnabled = true;
                         break;
 
                     case PageState.ConnectDevice:
                         connectLayout.IsVisible = true;
+                        connectLayout.IsEnabled = true;
                         break;
                 }
             }
@@ -327,6 +333,8 @@ namespace MBF_Launcher
             statusLabel.Text += String.Join("\n", devices.Select(device => $"  {device.Name}"));
             statusLabel.Text += "\n\nLeave this app running to use ModsBeforeFriday";
 
+            openBrowserButton.IsVisible = true;
+
             await LaunchMbf();
         }
 
@@ -353,7 +361,25 @@ namespace MBF_Launcher
 
                     if (authorizedDevices.Length == 0)
                     {
-                        State = PageState.ConnectDevice;
+                        if (HasPermission())
+                        {
+                            await EnableWifiDebug();
+                            devices = await AdbWrapper.GetDevicesAsync();
+
+                            if (devices.Length == 0)
+                            {
+                                await AdbWrapper.DisconnectAsync();
+                                State = PageState.ConnectDevice;
+                            }
+                            else
+                            {
+                                _ = DeviceConnected();
+                            }
+                        }
+                        else
+                        {
+                            State = PageState.ConnectDevice;
+                        }
                     }
                     else
                     {
@@ -463,6 +489,7 @@ namespace MBF_Launcher
         /// <param name="e"></param>
         private void pairingConfirmButton_Clicked(object sender, EventArgs e)
         {
+            pairingConfirmButton.Focus();
             UInt16 port;
             int pairingCode;
             if (UInt16.TryParse(portEntry.Text, out port) && int.TryParse(pairingCodeEntry.Text, out pairingCode))
@@ -527,6 +554,11 @@ namespace MBF_Launcher
         private void cycleWifiDebugging_Clicked(object sender, EventArgs e)
         {
             _ = EnableWifiDebug();
+        }
+
+        private void openBrowserButton_Clicked(object sender, EventArgs e)
+        {
+            _ = LaunchMbf();
         }
     }
 
