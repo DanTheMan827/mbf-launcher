@@ -1,0 +1,47 @@
+name: Build .NET MAUI App Android
+
+on:
+  push:
+    branches: [ "*" ]
+
+  pull_request:
+    branches: [ "*" ]
+
+
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Setup Keystore File
+      shell: bash
+      run: |
+        echo -n "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > myapp.keystore
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Install .NET MAUI
+      run: dotnet workload install maui
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: |
+        dotnet build "MBF Launcher/MBF Launcher.csproj" -c Release -f net8.0-android34.0 /p:AndroidSigningKeyStore=myapp.keystore /p:AndroidSigningKeyAlias=com.dantheman827.mbflauncher /p:AndroidSigningKeyPass="${{ secrets.KEYSTORE_PASSWORD }}" /p:AndroidSigningStorePass="${{ secrets.KEYSTORE_PASSWORD }}" --no-restore
+
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        path: |
+          ./**/*.aab
+          ./**/*.apk

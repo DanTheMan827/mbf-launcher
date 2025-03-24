@@ -115,15 +115,16 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\OnDeviceADB\OnDeviceADB.csproj">
-	    <ReferenceOutputAssembly>False</ReferenceOutputAssembly>
-	  </ProjectReference>
+	  <Compile Include="..\OnDeviceADB\AdbException.cs" Link="OnDeviceADB\AdbException.cs" />
+	  <Compile Include="..\OnDeviceADB\AdbSample.cs" Link="OnDeviceADB\AdbSample.cs" />
+	  <Compile Include="..\OnDeviceADB\AdbServer.cs" Link="OnDeviceADB\AdbServer.cs" />
+	  <Compile Include="..\OnDeviceADB\AdbWifiState.cs" Link="OnDeviceADB\AdbWifiState.cs" />
+	  <Compile Include="..\OnDeviceADB\AdbWrapper.cs" Link="OnDeviceADB\AdbWrapper.cs" />
+	  <Compile Include="..\OnDeviceADB\ExitInfo.cs" Link="OnDeviceADB\ExitInfo.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Reference Include="DanTheMan827.OnDeviceADB">
-	    <HintPath>..\OnDeviceADB\bin\$(Configuration)\net8.0-android\DanTheMan827.OnDeviceADB.dll</HintPath>
-	  </Reference>
+	  <Folder Include="OnDeviceADB\" />
 	</ItemGroup>
 
 </Project>
