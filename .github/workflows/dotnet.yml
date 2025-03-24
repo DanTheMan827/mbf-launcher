@@ -43,5 +43,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         path: |
-          ./**/*.aab
-          ./**/*.apk
+          ./MBF Launcher/bin/Release/net8.0-android34.0/com.dantheman827.mbflauncher-Signed.apk
