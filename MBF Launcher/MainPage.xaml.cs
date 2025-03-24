@@ -12,6 +12,7 @@ namespace MBF_Launcher
         AdbWrapper.AdbDevice[] devices = [];
         AdbWrapper.AdbDevice[] authorizedDevices => devices.Where(device => device.Authorized).ToArray();
         AdbWrapper.AdbDevice[] unauthorizedDevices => devices.Where(device => !device.Authorized).ToArray();
+        int[] adbPorts = [];
 
         int bridgePort = 25037;
         int fishClicks = 0;
@@ -108,31 +109,45 @@ namespace MBF_Launcher
             await AdbWrapper.StartServerAsync();
         }
 
+        private async Task<UInt16> GetAdbPort()
+        {
+            var process = Process.Start(new ProcessStartInfo(Path.Combine(Android.App.Application.Context.ApplicationInfo?.NativeLibraryDir!, "libAdbFinder.so"))
+            {
+                RedirectStandardOutput = true
+            });
+            await process.WaitForExitAsync();
+            return UInt16.Parse(process.StandardOutput.ReadToEnd().Trim().Split("\n").Where(l => l.Trim() != "").FirstOrDefault("0"));
+        }
+
         /// <summary>
         /// 
         /// </summary>
         /// <returns></returns>
         private async Task EnableWifiDebug()
         {
-            var adbWifiState = AdbWrapper.AdbWifiState;
-            var port = await AdbWrapper.EnableAdbWiFiAsync(true);
+            AdbWrapper.AdbWifiState = AdbWifiState.Enabled;
+            UInt16 port = 0;
 
-            Debug.Assert(port > 0);
-
-            if (port > 0)
+            while (port == 0)
             {
-                State = PageState.Initializing;
-                statusLabel.Text = String.Format(PageStrings.ConnectingOnPort, port);
-                var device = await AdbWrapper.ConnectAsync("127.0.0.1", port);
+                port = await GetAdbPort();
 
-                //statusLabel.Text = PageStrings.SettingsTcpIpMode;
-                //await AdbWrapper.TcpIpMode(device);
-
-                //statusLabel.Text = PageStrings.DisconnectingDevices;
-                //await AdbWrapper.DisconnectAsync();
+                if (port > 0)
+                {
+                    break;
+                }
+                else
+                {
+                    var label = statusLabel.Text;
+                    State = PageState.WirelessDebugging;
+                    statusLabel.Text = label;
+                    Thread.Sleep(500);
+                }
             }
 
-            //AdbWrapper.AdbWifiState = adbWifiState;
+            State = PageState.Initializing;
+            statusLabel.Text = String.Format(PageStrings.ConnectingOnPort, port);
+            var device = await AdbWrapper.ConnectAsync("127.0.0.1", port);
 
             statusLabel.Text = PageStrings.GettingDevices;
             devices = await AdbWrapper.GetDevicesAsync();
@@ -285,11 +300,12 @@ namespace MBF_Launcher
             {
                 try
                 {
-                    State = PageState.WirelessDebugging;
                     statusLabel.Text = PageStrings.EnablingWirelessDebugging;
                     await EnableWifiDebug();
                 }
-                catch (Exception) { }
+                catch (Exception ex)
+                {
+                }
                 State = PageState.Initializing;
             }
 
@@ -361,9 +377,14 @@ namespace MBF_Launcher
 
                     if (authorizedDevices.Length == 0)
                     {
-                        if (HasPermission())
+                        var port = await GetAdbPort();
+                        if (port > 0)
                         {
-                            await EnableWifiDebug();
+                            State = PageState.Initializing;
+                            statusLabel.Text = String.Format(PageStrings.ConnectingOnPort, port);
+                            var device = await AdbWrapper.ConnectAsync("127.0.0.1", port);
+
+                            statusLabel.Text = PageStrings.GettingDevices;
                             devices = await AdbWrapper.GetDevicesAsync();
 
                             if (devices.Length == 0)
@@ -465,6 +486,7 @@ namespace MBF_Launcher
         private void ContentPage_Loaded(object sender, EventArgs e)
         {
             State = PageState.Initializing;
+
             _ = InitializeAdb();
         }
 
@@ -553,7 +575,7 @@ namespace MBF_Launcher
 
         private void cycleWifiDebugging_Clicked(object sender, EventArgs e)
         {
-            _ = EnableWifiDebug();
+            _ = AdbWrapper.EnableAdbWiFiAsync(true);
         }
 
         private void openBrowserButton_Clicked(object sender, EventArgs e)

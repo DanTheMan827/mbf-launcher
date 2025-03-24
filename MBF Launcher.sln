@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MBF Launcher", "MBF Launche
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OnDeviceADB", "OnDeviceADB\OnDeviceADB.csproj", "{BD3D4AE0-CC8B-40DA-88E8-C377541EFDCC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdbCheck", "AdbCheck\AdbCheck.csproj", "{9A36997F-9867-41D2-82DE-BA3C34C178C4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,6 +25,10 @@ Global
 		{BD3D4AE0-CC8B-40DA-88E8-C377541EFDCC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD3D4AE0-CC8B-40DA-88E8-C377541EFDCC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD3D4AE0-CC8B-40DA-88E8-C377541EFDCC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A36997F-9867-41D2-82DE-BA3C34C178C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A36997F-9867-41D2-82DE-BA3C34C178C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A36997F-9867-41D2-82DE-BA3C34C178C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A36997F-9867-41D2-82DE-BA3C34C178C4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
