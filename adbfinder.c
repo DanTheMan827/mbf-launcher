@@ -10,7 +10,7 @@
 #define MAX_PORT 65535
 #define MIN_PORT 1024
 #define TIMEOUT_SEC 0    // 0 seconds for select()
-#define TIMEOUT_USEC 10000  // 100ms timeout in microseconds
+#define TIMEOUT_USEC 10000  // 10ms timeout in microseconds
 
 // Function to send handshake to check if ADB is available on the port
 int is_adb_device(const char *host, int port) {
