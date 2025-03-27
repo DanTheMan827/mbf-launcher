@@ -4,5 +4,5 @@
              x:Class="MBF_Launcher.BrowserPage"
              Title="BrowserPage"
              NavigationPage.HasNavigationBar="False">
-    <WebView x:Name="webView" />
+    <WebView x:Name="webView" UserAgent="MbfLauncher/1.0" />
 </ContentPage>
