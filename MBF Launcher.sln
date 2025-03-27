@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MBF Launcher", "MBF Launche
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OnDeviceADB", "OnDeviceADB\OnDeviceADB.csproj", "{BD3D4AE0-CC8B-40DA-88E8-C377541EFDCC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdbCheck", "AdbCheck\AdbCheck.csproj", "{9A36997F-9867-41D2-82DE-BA3C34C178C4}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
