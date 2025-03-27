@@ -1,8 +1,10 @@
 ﻿using Android.Content;
+using Android.Net;
 using DanTheMan827.OnDeviceADB;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using Tmds.MDns;
 
 namespace MBF_Launcher
 {
@@ -11,6 +13,8 @@ namespace MBF_Launcher
     {
         internal bool initialized = false;
         internal bool newWindow = true;
+
+        ServiceBrowser serviceBrowser = new ServiceBrowser();
 
         AdbWrapper.AdbDevice[] devices = [];
         AdbWrapper.AdbDevice[] authorizedDevices => devices.Where(device => device.Authorized).ToArray();
@@ -39,6 +43,44 @@ namespace MBF_Launcher
         }
 
         #region Helpers
+        /// <summary>
+        /// Gets the device's local IP address.
+        /// </summary>
+        /// <returns>The IP address as a string.</returns>
+        public static string[] GetLocalIPAddresses()
+        {
+            var addresses = new List<string>();
+
+            var context = Android.App.Application.Context;
+            // Obtain the ConnectivityManager instance
+            var connectivityManager = (ConnectivityManager)context.GetSystemService(Context.ConnectivityService)!;
+
+            // Get the currently active network
+            var activeNetwork = connectivityManager.ActiveNetwork;
+            if (activeNetwork == null)
+            {
+                return addresses.ToArray();
+            }
+
+            // Retrieve link properties for the active network
+            var linkProperties = connectivityManager.GetLinkProperties(activeNetwork);
+            if (linkProperties == null)
+            {
+                return addresses.ToArray();
+            }
+
+            // Iterate over the link addresses to find an IPv4 address
+            foreach (var linkAddress in linkProperties.LinkAddresses)
+            {
+                var address = linkAddress.Address?.HostAddress;
+                if (address != null)
+                {
+                    addresses.Add(address);
+                }
+            }
+
+            return addresses.ToArray();
+        }
         /// <summary>
         /// Retrieves the value of an environment variable from the current process.
         /// </summary>
@@ -294,6 +336,49 @@ namespace MBF_Launcher
             bridgePort = GetAvailablePort((ushort)(adbPort + 1));
 
             PageStrings.BridgeAddress = $"http://127.0.0.1:{bridgePort}/ModsBeforeFriday/?bridge=";
+
+            serviceBrowser.ServiceAdded += this.ServiceBrowser_ServiceAdded;
+            ;
+            serviceBrowser.ServiceRemoved += this.ServiceBrowser_ServiceRemoved;
+            ;
+
+            serviceBrowser.StartBrowse("_adb-tls-pairing._tcp");
+        }
+
+        private static bool checkPairingService(ServiceAnnouncement service)
+        {
+            var localAddresses = GetLocalIPAddresses();
+            foreach (var ip in service.Addresses)
+            {
+                if (localAddresses.Contains(ip.ToString()))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void ServiceBrowser_ServiceRemoved(object? sender, ServiceAnnouncementEventArgs e)
+        {
+            if (checkPairingService(e.Announcement))
+            {
+
+                portEntry.Text = "";
+                portLabel.IsVisible = true;
+                portEntry.IsVisible = true;
+            }
+        }
+
+        private void ServiceBrowser_ServiceAdded(object? sender, ServiceAnnouncementEventArgs e)
+        {
+            if (checkPairingService(e.Announcement))
+            {
+                portEntry.Text = e.Announcement.Port.ToString();
+                portLabel.IsVisible = false;
+                portEntry.IsVisible = false;
+
+            }
         }
 
         /// <summary>

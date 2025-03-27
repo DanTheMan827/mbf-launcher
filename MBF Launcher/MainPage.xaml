@@ -72,6 +72,7 @@
                     <!-- Second row: Port -->
                     <Label Grid.Row="1"
                         Grid.Column="0"
+                        x:Name="portLabel"
                         Text="Port:"
                         HorizontalOptions="End"
                         VerticalOptions="Center" />
