@@ -6,8 +6,11 @@ using System.Net.Sockets;
 
 namespace MBF_Launcher
 {
+
     public partial class MainPage : ContentPage
     {
+        internal bool initialized = false;
+        internal bool newWindow = true;
 
         AdbWrapper.AdbDevice[] devices = [];
         AdbWrapper.AdbDevice[] authorizedDevices => devices.Where(device => device.Authorized).ToArray();
@@ -156,14 +159,23 @@ namespace MBF_Launcher
         /// <summary>
         /// Opens the settings to the developer options
         /// </summary>
-        private static void OpenSettings()
+        private static void OpenSettings(bool developerSettings)
         {
             var context = Android.App.Application.Context;
             var intent = new Intent();
             // Specify the package and class name for the internal Development Settings activity
-            intent.SetComponent(new ComponentName(
-                "com.android.settings",
-                "com.android.settings.Settings$DevelopmentSettingsDashboardActivity"));
+            if (developerSettings)
+            {
+                intent.SetComponent(new ComponentName(
+                    "com.android.settings",
+                    "com.android.settings.Settings$DevelopmentSettingsDashboardActivity"));
+            }
+            else
+            {
+                intent.SetComponent(new ComponentName(
+                    "com.android.settings",
+                    "com.android.settings.Settings"));
+            }
             intent.AddFlags(ActivityFlags.NewTask);
             context.StartActivity(intent);
         }
@@ -172,7 +184,7 @@ namespace MBF_Launcher
         /// Launches the bridge process
         /// </summary>
         /// <returns></returns>
-        private async Task LaunchMbf()
+        public async Task LaunchMbf()
         {
             try
             {
@@ -186,6 +198,9 @@ namespace MBF_Launcher
             {
                 await DisplayAlert(PageStrings.ErrorStartingBridge, ex.Message, PageStrings.AlertDismiss);
             }
+
+            await Navigation.PushAsync(new BrowserPage(PageStrings.BridgeAddress));
+            return;
 
             try
             {
@@ -351,6 +366,8 @@ namespace MBF_Launcher
 
             openBrowserButton.IsVisible = true;
 
+            initialized = true;
+
             await LaunchMbf();
         }
 
@@ -487,7 +504,17 @@ namespace MBF_Launcher
         {
             State = PageState.Initializing;
 
-            _ = InitializeAdb();
+            if (newWindow && initialized)
+            {
+                _ = LaunchMbf();
+            }
+
+            if (!initialized)
+            {
+                _ = InitializeAdb();
+            }
+
+            newWindow = false;
         }
 
         /// <summary>
@@ -502,7 +529,14 @@ namespace MBF_Launcher
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void launchSettingsButton_Clicked(object sender, EventArgs e) => OpenSettings();
+        private void launchSettingsButton_Clicked(object sender, EventArgs e) => OpenSettings(false);
+
+        /// <summary>
+        /// Called when the launch settings button is clicked
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void launchDeveloperSettingsButton_Clicked(object sender, EventArgs e) => OpenSettings(true);
 
         /// <summary>
         /// Called when the pair button is clicked

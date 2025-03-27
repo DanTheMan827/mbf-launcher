@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.dantheman827.mbflauncher">
-	<application android:allowBackup="true" android:supportsRtl="true" android:icon="@mipmap/icon"></application>
+	<application android:allowBackup="true" android:supportsRtl="true" android:icon="@mipmap/icon" android:usesCleartextTraffic="true"></application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.READ_LOGS" />
