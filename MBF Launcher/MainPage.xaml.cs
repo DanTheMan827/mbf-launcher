@@ -1,171 +1,85 @@
-﻿using Android.Content;
-using Android.Net;
-using DanTheMan827.OnDeviceADB;
+﻿using DanTheMan827.OnDeviceADB;
+using MBF_Launcher.Services;
 using System.Diagnostics;
-using System.Net;
-using System.Net.Sockets;
 using Tmds.MDns;
 
 namespace MBF_Launcher
 {
-
     public partial class MainPage : ContentPage
     {
+        #region Variables
+        /// <summary>
+        /// If ADB has been initialized
+        /// </summary>
         internal bool initialized = false;
+
+        /// <summary>
+        /// If the page is being opened in a new window
+        /// </summary>
         internal bool newWindow = true;
 
+        /// <summary>
+        /// Service browser instance for discovering ADB pairing services
+        /// </summary>
         ServiceBrowser serviceBrowser = new ServiceBrowser();
 
-        AdbWrapper.AdbDevice[] devices = [];
-        AdbWrapper.AdbDevice[] authorizedDevices => devices.Where(device => device.Authorized).ToArray();
-        AdbWrapper.AdbDevice[] unauthorizedDevices => devices.Where(device => !device.Authorized).ToArray();
-        int[] adbPorts = [];
-
-        int bridgePort = 25037;
-        int fishClicks = 0;
-
-        public static class PageStrings
+        AdbWrapper.AdbDevice[] _devices = [];
+        /// <summary>
+        /// List of devices connected to the ADB server
+        /// </summary>
+        AdbWrapper.AdbDevice[] devices
         {
-            public const string DisconnectingDevices = "Disconnecting Devices";
-            public const string EnablingWirelessDebugging = "Enabling Wireless Debugging";
-            public const string ConnectingOnPort = "Connecting on Port {0}";
-            public const string GettingDevices = "Getting Devices";
-            public const string SettingTcpIpMode = "Setting TCP IP Mode";
-            public const string AlertDismiss = "Okay";
-            public const string Error = "Error";
-            public const string BridgeTerminated = "Bridge Process Terminated";
-            public const string StartingAdb = "Starting ADB";
-            public static string BridgeAddress = "http://127.0.0.1:25037/?bridge=";
-            public static string PackageID => Android.App.Application.Context?.PackageName ?? throw new Exception("Unknown package name");
-            public static string AppRestartCommand => $"am force-stop {PackageID}; monkey -p {PackageID} -c android.intent.category.LAUNCHER 1";
-            public const string ErrorStartingBridge = "Error Starting Bridge";
-            public const string GrantingPermissions = "Granting Permissions";
+            get => _devices;
+            set
+            {
+                _devices = value;
+                authorizedDevices = _devices.Where(device => device.Authorized).ToArray();
+                unauthorizedDevices = _devices.Where(device => !device.Authorized).ToArray();
+
+                OnPropertyChanged(nameof(devices));
+                OnPropertyChanged(nameof(authorizedDevices));
+                OnPropertyChanged(nameof(unauthorizedDevices));
+            }
+        }
+
+        /// <summary>
+        /// List of devices connected to the ADB server that are authorized
+        /// </summary>
+        AdbWrapper.AdbDevice[] authorizedDevices { get; set; }
+
+        /// <summary>
+        /// List of devices connected to the ADB server that are unauthorized
+        /// </summary>
+        AdbWrapper.AdbDevice[] unauthorizedDevices { get; set; }
+
+        /// <summary>
+        /// Number of times the fish has been tapped
+        /// </summary>
+        int fishTaps = 0;
+        #endregion
+
+        /// <summary>
+        /// Constructor for the MainPage
+        /// </summary>
+        /// <param name="bridge"></param>
+        public MainPage()
+        {
+            InitializeComponent();
+
+            // Assigns ADB server port to a random available port
+            AdbServer.AdbPort = Helpers.GetAvailablePort();
+
+            // Configures the service browser to look for ADB pairing services
+            serviceBrowser.ServiceAdded += this.ServiceBrowser_ServiceAdded;
+            serviceBrowser.ServiceRemoved += this.ServiceBrowser_ServiceRemoved;
+
+            // Starts the service browser
+            serviceBrowser.StartBrowse("_adb-tls-pairing._tcp");
         }
 
         #region Helpers
         /// <summary>
-        /// Gets the device's local IP address.
-        /// </summary>
-        /// <returns>The IP address as a string.</returns>
-        public static string[] GetLocalIPAddresses()
-        {
-            var addresses = new List<string>();
-
-            var context = Android.App.Application.Context;
-            // Obtain the ConnectivityManager instance
-            var connectivityManager = (ConnectivityManager)context.GetSystemService(Context.ConnectivityService)!;
-
-            // Get the currently active network
-            var activeNetwork = connectivityManager.ActiveNetwork;
-            if (activeNetwork == null)
-            {
-                return addresses.ToArray();
-            }
-
-            // Retrieve link properties for the active network
-            var linkProperties = connectivityManager.GetLinkProperties(activeNetwork);
-            if (linkProperties == null)
-            {
-                return addresses.ToArray();
-            }
-
-            // Iterate over the link addresses to find an IPv4 address
-            foreach (var linkAddress in linkProperties.LinkAddresses)
-            {
-                var address = linkAddress.Address?.HostAddress;
-                if (address != null)
-                {
-                    addresses.Add(address);
-                }
-            }
-
-            return addresses.ToArray();
-        }
-        /// <summary>
-        /// Retrieves the value of an environment variable from the current process.
-        /// </summary>
-        /// <param name="variable">The name of the environment variable.</param>
-        /// <returns>The value of the environment variable specified by <paramref name="variable"/>,
-        /// or <see langword="null"/> if the environment variable is not found.</returns>
-        private static string? TryGetEnvironmentVariable(string variable)
-        {
-            try
-            {
-                return Environment.GetEnvironmentVariable(variable);
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// checks for used ports and retrieves the first free port
-        /// </summary>
-        /// <returns>the free port or 0 if it did not find a free port</returns>
-        public static UInt16 GetAvailablePort(UInt16 startingPort = 25036, UInt16 maxPort = UInt16.MaxValue)
-        {
-            int port = startingPort - 1;
-
-            while (++port < maxPort)
-            {
-                try
-                {
-                    using (var listener = new TcpListener(IPAddress.Loopback, port))
-                    {
-                        listener.Start();
-                        return (ushort)port;
-                    }
-                }
-                catch (Exception)
-                {
-
-                }
-            }
-
-            throw new Exception("Free port could not be found");
-        }
-
-        /// <summary>
-        /// Checks if we have our needed permissions by trying to set the Wi-Fi debugging state
-        /// </summary>
-        /// <returns></returns>
-        private bool HasPermission()
-        {
-            try
-            {
-                AdbWrapper.AdbWifiState = AdbWrapper.AdbWifiState;
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Restarts the adb server
-        /// </summary>
-        /// <returns></returns>
-        private static async Task RestartAdb()
-        {
-            await AdbWrapper.DisconnectAsync();
-            await AdbWrapper.KillServerAsync();
-            await AdbWrapper.StartServerAsync();
-        }
-
-        private async Task<UInt16> GetAdbPort()
-        {
-            var process = Process.Start(new ProcessStartInfo(Path.Combine(Android.App.Application.Context.ApplicationInfo?.NativeLibraryDir!, "libAdbFinder.so"))
-            {
-                RedirectStandardOutput = true
-            });
-            await process.WaitForExitAsync();
-            return UInt16.Parse(process.StandardOutput.ReadToEnd().Trim().Split("\n").Where(l => l.Trim() != "").FirstOrDefault("0"));
-        }
-
-        /// <summary>
-        /// 
+        /// Enables wireless debugging and connects to the device
         /// </summary>
         /// <returns></returns>
         private async Task EnableWifiDebug()
@@ -175,7 +89,7 @@ namespace MBF_Launcher
 
             while (port == 0)
             {
-                port = await GetAdbPort();
+                port = await Helpers.GetAdbPort();
 
                 if (port > 0)
                 {
@@ -191,35 +105,11 @@ namespace MBF_Launcher
             }
 
             State = PageState.Initializing;
-            statusLabel.Text = string.Format(PageStrings.ConnectingOnPort, port);
+            statusLabel.Text = string.Format(AppResources.ConnectingOnPort, port);
             var device = await AdbWrapper.ConnectAsync("127.0.0.1", port);
 
-            statusLabel.Text = PageStrings.GettingDevices;
+            statusLabel.Text = AppResources.GettingDevices;
             devices = await AdbWrapper.GetDevicesAsync();
-        }
-
-        /// <summary>
-        /// Opens the settings to the developer options
-        /// </summary>
-        private static void OpenSettings(bool developerSettings)
-        {
-            var context = Android.App.Application.Context;
-            var intent = new Intent();
-            // Specify the package and class name for the internal Development Settings activity
-            if (developerSettings)
-            {
-                intent.SetComponent(new ComponentName(
-                    "com.android.settings",
-                    "com.android.settings.Settings$DevelopmentSettingsDashboardActivity"));
-            }
-            else
-            {
-                intent.SetComponent(new ComponentName(
-                    "com.android.settings",
-                    "com.android.settings.Settings"));
-            }
-            intent.AddFlags(ActivityFlags.NewTask);
-            context.StartActivity(intent);
         }
 
         /// <summary>
@@ -230,18 +120,25 @@ namespace MBF_Launcher
         {
             try
             {
-                if (MauiProgram.bridgeProcess == null || MauiProgram.bridgeProcess.HasExited)
+                if (!BridgeService.Instance.IsRunning)
                 {
-                    MauiProgram.bridgeProcess = Process.Start(Path.Combine(Android.App.Application.Context.ApplicationInfo?.NativeLibraryDir!, "libMbfBridge.so"), $"--proxy --port {bridgePort} --adb-port {AdbServer.AdbPort}");
-                    MauiProgram.bridgeProcess.Exited += this.BridgeProcess_Exited;
+                    await BridgeService.Instance.Start(new Services.BridgeService.BridgeStartInfo()
+                    {
+                        BinaryPath = Path.Combine(SharedData.NativeLibraryDir, "libMbfBridge.so"),
+                        AppUrl = AppConfig.Instance.AppUrl,
+                        AdbPort = AdbServer.AdbPort
+                    });
+                    BridgeService.Instance.BridgeExited += this.BridgeExited;
                 }
             }
             catch (Exception ex)
             {
-                await DisplayAlert(PageStrings.ErrorStartingBridge, ex.Message, PageStrings.AlertDismiss);
+                await DisplayAlert(AppResources.ErrorStartingBridge, ex.Message, AppResources.AlertDismiss);
+                return;
             }
 
-            var address = PageStrings.BridgeAddress;
+            var startInfo = BridgeService.Instance.StartupInfo!;
+            var address = startInfo.BrowserUrl.ToString();
 
             if (developerLayout.IsVisible)
             {
@@ -258,31 +155,44 @@ namespace MBF_Launcher
             }
 
             await Navigation.PushAsync(new BrowserPage(address));
-            return;
-
-            try
-            {
-                var browserResult = await AdbWrapper.RunShellCommand(devices[0].Name, "am", "start", "-a", "android.intent.action.VIEW", "-d", PageStrings.BridgeAddress);
-
-                if (browserResult.ExitCode != 0)
-                {
-                    throw new Exception(browserResult.Output);
-                }
-            }
-            catch (Exception ex)
-            {
-                await DisplayAlert(PageStrings.Error, ex.Message, PageStrings.AlertDismiss);
-            }
-
         }
         #endregion
 
         #region Page State
+        /// <summary>
+        /// The various states the page can be in
+        /// </summary>
         enum PageState
         {
-            Initializing, Authorization, WirelessDebugging, Pairing, ConnectDevice
+            /// <summary>
+            /// The page is initializing
+            /// </summary>
+            Initializing,
+
+            /// <summary>
+            /// Device is waiting for ADB authorization
+            /// </summary>
+            Authorization,
+
+            /// <summary>
+            /// Waiting for wireless debugging to be enabled
+            /// </summary>
+            WirelessDebugging,
+
+            /// <summary>
+            /// In wireless debug pairing
+            /// </summary>
+            Pairing,
+
+            /// <summary>
+            /// Prompting for wireless debug port
+            /// </summary>
+            ConnectDevice
         }
 
+        /// <summary>
+        /// Controls when certain elements are visible on the page
+        /// </summary>
         private PageState State
         {
             set
@@ -343,57 +253,42 @@ namespace MBF_Launcher
         }
         #endregion
 
-        public MainPage()
+        #region Methods
+        /// <summary>
+        /// Updates the package picker with the list of installed packages
+        /// </summary>
+        /// <returns></returns>
+        private async Task UpdatePackages()
         {
-            InitializeComponent();
-            var adbPort = GetAvailablePort();
+            var output = await AdbWrapper.RunShellCommand(devices[0].Name, "pm list packages");
 
-            AdbServer.AdbPort = adbPort;
-            bridgePort = GetAvailablePort((ushort)(adbPort + 1));
-
-            PageStrings.BridgeAddress = $"http://127.0.0.1:{bridgePort}/ModsBeforeFriday/?bridge=";
-
-            serviceBrowser.ServiceAdded += this.ServiceBrowser_ServiceAdded;
-            ;
-            serviceBrowser.ServiceRemoved += this.ServiceBrowser_ServiceRemoved;
-            ;
-
-            serviceBrowser.StartBrowse("_adb-tls-pairing._tcp");
-        }
-
-        private static bool checkPairingService(ServiceAnnouncement service)
-        {
-            var localAddresses = GetLocalIPAddresses();
-            foreach (var ip in service.Addresses)
+            if (output.ExitCode == 0)
             {
-                if (localAddresses.Contains(ip.ToString()))
+                var packages = output.Output
+                    .Split("\n")
+                    .Where(l => l.StartsWith("package:"))
+                    .Select(l => l.Substring(8))
+                    .Where(l =>
+                        !l.StartsWith("com.android.") &&
+                        !l.StartsWith("com.oculus.") &&
+                        !l.StartsWith("com.meta.") &&
+                        !l.StartsWith("com.facebook.") &&
+                        !l.StartsWith("com.environment.") &&
+                        !l.StartsWith("android.") &&
+                        l != "android" &&
+                        l != "horizonos.platform" &&
+                        l != "oculus.platform" &&
+                        l != "com.qualcomm.timeservice"
+                     )
+                    .Order()
+                    .ToList();
+                packagePicker.ItemsSource = packages;
+                if (!packages.Contains(AppConfig.Instance.SelectedGame))
                 {
-                    return true;
+                    AppConfig.Instance.SelectedGame = "com.beatgames.beatsaber";
                 }
-            }
 
-            return false;
-        }
-
-        private void ServiceBrowser_ServiceRemoved(object? sender, ServiceAnnouncementEventArgs e)
-        {
-            if (checkPairingService(e.Announcement))
-            {
-
-                portEntry.Text = "";
-                portLabel.IsVisible = true;
-                portEntry.IsVisible = true;
-            }
-        }
-
-        private void ServiceBrowser_ServiceAdded(object? sender, ServiceAnnouncementEventArgs e)
-        {
-            if (checkPairingService(e.Announcement))
-            {
-                portEntry.Text = e.Announcement.Port.ToString();
-                portLabel.IsVisible = false;
-                portEntry.IsVisible = false;
-
+                packagePicker.SelectedIndex = packages.IndexOf(AppConfig.Instance.SelectedGame);
             }
         }
 
@@ -405,23 +300,21 @@ namespace MBF_Launcher
         {
             if (!AdbWrapper.IsServerRunning)
             {
-                statusLabel.Text = PageStrings.StartingAdb;
+                statusLabel.Text = AppResources.StartingAdb;
                 await AdbWrapper.DisconnectAsync();
             }
 
-            statusLabel.Text = PageStrings.GettingDevices;
+            statusLabel.Text = AppResources.GettingDevices;
             devices = await AdbWrapper.GetDevicesAsync();
 
-            if (authorizedDevices.Length == 0 && unauthorizedDevices.Length == 0 && HasPermission())
+            if (authorizedDevices.Length == 0 && unauthorizedDevices.Length == 0 && Helpers.HasPermission())
             {
                 try
                 {
-                    statusLabel.Text = PageStrings.EnablingWirelessDebugging;
+                    statusLabel.Text = AppResources.EnablingWirelessDebugging;
                     await EnableWifiDebug();
                 }
-                catch (Exception ex)
-                {
-                }
+                catch (Exception ex) { }
                 State = PageState.Initializing;
             }
 
@@ -447,17 +340,17 @@ namespace MBF_Launcher
         private async Task DeviceConnected()
         {
             State = PageState.Initializing;
-            if (!HasPermission())
+            if (!Helpers.HasPermission())
             {
-                statusLabel.Text = PageStrings.GrantingPermissions;
+                statusLabel.Text = AppResources.GrantingPermissions;
                 try
                 {
                     var package = Android.App.Application.Context.PackageName;
-                    await AdbWrapper.RunAdbCommandAsync("shell", $"sh -c '{AdbWrapper.GrantPermissionsCommand}; {PageStrings.AppRestartCommand}' > /dev/null 2>&1 < /dev/null &");
+                    await AdbWrapper.RunAdbCommandAsync("shell", $"sh -c '{AdbWrapper.GrantPermissionsCommand}; {SharedData.AppRestartCommand}' > /dev/null 2>&1 < /dev/null &");
                 }
                 catch (Exception ex)
                 {
-                    await DisplayAlert(PageStrings.Error, ex.Message, PageStrings.AlertDismiss);
+                    await DisplayAlert(AppResources.Error, ex.Message, AppResources.AlertDismiss);
                 }
             }
 
@@ -496,14 +389,14 @@ namespace MBF_Launcher
 
                     if (authorizedDevices.Length == 0)
                     {
-                        var port = await GetAdbPort();
+                        var port = await Helpers.GetAdbPort();
                         if (port > 0)
                         {
                             State = PageState.Initializing;
-                            statusLabel.Text = string.Format(PageStrings.ConnectingOnPort, port);
+                            statusLabel.Text = string.Format(AppResources.ConnectingOnPort, port);
                             var device = await AdbWrapper.ConnectAsync("127.0.0.1", port);
 
-                            statusLabel.Text = PageStrings.GettingDevices;
+                            statusLabel.Text = AppResources.GettingDevices;
                             devices = await AdbWrapper.GetDevicesAsync();
 
                             if (devices.Length == 0)
@@ -530,7 +423,7 @@ namespace MBF_Launcher
             }
             catch (Exception)
             {
-                await DisplayAlert("Error", "Unable to pair with the provided information.", PageStrings.AlertDismiss);
+                await DisplayAlert("Error", "Unable to pair with the provided information.", AppResources.AlertDismiss);
             }
             finally
             {
@@ -557,7 +450,7 @@ namespace MBF_Launcher
                 //statusLabel.Text = "Disconnecting Devices";
                 //await AdbWrapper.DisconnectAsync();
 
-                statusLabel.Text = PageStrings.GettingDevices;
+                statusLabel.Text = AppResources.GettingDevices;
                 devices = await AdbWrapper.GetDevicesAsync();
 
 
@@ -574,39 +467,57 @@ namespace MBF_Launcher
             }
             catch (Exception ex)
             {
-                await DisplayAlert(PageStrings.Error, ex.Message, PageStrings.AlertDismiss);
+                await DisplayAlert(AppResources.Error, ex.Message, AppResources.AlertDismiss);
             }
             finally
             {
                 connectLayout.IsEnabled = true;
             }
         }
+        #endregion
 
         #region Event Handlers
         /// <summary>
-        /// Called when the bridge process has exited.  This is probably due to an error.
+        /// Called when the pairing service is removed.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void BridgeProcess_Exited(object? sender, EventArgs e)
+        private void ServiceBrowser_ServiceRemoved(object? sender, ServiceAnnouncementEventArgs e)
+        {
+            if (Helpers.checkPairingService(e.Announcement))
+            {
+                portEntry.Text = "";
+                portEntry.IsEnabled = true;
+            }
+        }
+
+        /// <summary>
+        /// Called when the pairing service is added.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ServiceBrowser_ServiceAdded(object? sender, ServiceAnnouncementEventArgs e)
+        {
+            if (Helpers.checkPairingService(e.Announcement))
+            {
+                portEntry.Text = e.Announcement.Port.ToString();
+                portEntry.IsEnabled = false;
+
+            }
+        }
+
+        /// <summary>
+        /// Called when the bridge process has exited.  This is probably due to an error.
+        /// </summary>
+        /// <param name="process"></param>
+        /// <param name="e"></param>
+        private void BridgeExited(Process process, EventArgs e)
         {
             Task.Run(async () =>
             {
-                await DisplayAlert(PageStrings.BridgeTerminated, MauiProgram.bridgeProcess?.StandardError.ReadToEnd(), PageStrings.AlertDismiss);
-                await AdbWrapper.RunAdbCommandAsync("shell", $"sh -c '{PageStrings.AppRestartCommand}' > /dev/null 2>&1 < /dev/null &");
+                await DisplayAlert(AppResources.BridgeProcessTerminated, process.StandardError.ReadToEnd(), AppResources.AlertDismiss);
+                await AdbWrapper.RunAdbCommandAsync("shell", $"sh -c '{SharedData.AppRestartCommand}' > /dev/null 2>&1 < /dev/null &");
             });
-        }
-
-        private async Task UpdatePackages()
-        {
-            var output = await AdbWrapper.RunShellCommand(devices[0].Name, "pm list packages | sed 's/package://' | sort");
-
-            if (output.ExitCode == 0)
-            {
-                var packages = output.Output.Split("\n").Where(l => l.Trim() != "").Select(l => l.Trim()).ToList();
-                packagePicker.ItemsSource = packages;
-                packagePicker.SelectedIndex = packages.IndexOf("com.beatgames.beatsaber");
-            }
         }
 
         /// <summary>
@@ -640,21 +551,21 @@ namespace MBF_Launcher
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void restartAdbButton_Clicked(object sender, EventArgs e) => _ = RestartAdb();
+        private void restartAdbButton_Clicked(object sender, EventArgs e) => _ = Helpers.RestartAdb();
 
         /// <summary>
         /// Called when the launch settings button is clicked
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void launchSettingsButton_Clicked(object sender, EventArgs e) => OpenSettings(false);
+        private void launchSettingsButton_Clicked(object sender, EventArgs e) => Helpers.OpenSettings(false);
 
         /// <summary>
         /// Called when the launch settings button is clicked
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void launchDeveloperSettingsButton_Clicked(object sender, EventArgs e) => OpenSettings(true);
+        private void launchDeveloperSettingsButton_Clicked(object sender, EventArgs e) => Helpers.OpenSettings(true);
 
         /// <summary>
         /// Called when the pair button is clicked
@@ -672,7 +583,7 @@ namespace MBF_Launcher
             }
             else
             {
-                DisplayAlert(PageStrings.Error, "Please check the format of the port and pairing code, only numbers should be entered.", PageStrings.AlertDismiss);
+                DisplayAlert(AppResources.Error, "Please check the format of the port and pairing code, only numbers should be entered.", AppResources.AlertDismiss);
             }
         }
 
@@ -690,12 +601,15 @@ namespace MBF_Launcher
             }
             else
             {
-                DisplayAlert(PageStrings.Error, "Please check the format of the port, only numbers should be entered.", PageStrings.AlertDismiss);
+                DisplayAlert(AppResources.Error, "Please check the format of the port, only numbers should be entered.", AppResources.AlertDismiss);
             }
         }
 
-        #endregion
-
+        /// <summary>
+        /// Switches the device to TCP/IP mode
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void TcpIpMode_Clicked(object sender, EventArgs e)
         {
             _ = Task.Run(async () =>
@@ -707,34 +621,55 @@ namespace MBF_Launcher
             });
         }
 
+        /// <summary>
+        /// Exits the app
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void exitApp_Clicked(object sender, EventArgs e)
         {
             Application.Current?.Quit();
         }
 
+        /// <summary>
+        /// Enables wireless debugging
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void cycleWifiDebugging_Clicked(object sender, EventArgs e)
         {
             _ = AdbWrapper.EnableAdbWiFiAsync(true);
         }
 
+        /// <summary>
+        /// Launches the bridge and opens the browser
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void openBrowserButton_Clicked(object sender, EventArgs e)
         {
             _ = LaunchMbf();
         }
 
+        /// <summary>
+        /// Called when the fish is tapped
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Fish_Tapped(object sender, TappedEventArgs e)
         {
-            if (fishClicks < 5)
+            if (fishTaps < 5)
             {
-                fishClicks++;
+                fishTaps++;
             }
 
-            if (fishClicks >= 5)
+            if (fishTaps >= 5)
             {
                 developerLayout.IsVisible = true;
                 return;
             }
         }
+        #endregion
     }
 
 }
