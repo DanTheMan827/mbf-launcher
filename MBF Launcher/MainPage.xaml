@@ -3,9 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MBF_Launcher.MainPage"
              Loaded="ContentPage_Loaded"
+             xmlns:resx="clr-namespace:MBF_Launcher"
              NavigationPage.HasNavigationBar="False"
              >
-
     <ScrollView>
         <VerticalStackLayout
             Padding="30,30"
@@ -17,7 +17,7 @@
                     </Image.GestureRecognizers>
                 </Image>
                 <Label x:Name="statusLabel" />
-                <Button x:Name="openBrowserButton" Clicked="openBrowserButton_Clicked" IsVisible="False" Text="Open Browser" />
+                <Button x:Name="openBrowserButton" Clicked="openBrowserButton_Clicked" IsVisible="False" Text="{x:Static resx:AppResources.OpenBrowser}" />
             </VerticalStackLayout>
             
             <VerticalStackLayout
@@ -29,11 +29,11 @@
                 IsVisible="False"
                 Spacing="25" 
                 Padding="0,25,0,0">
-                <Label>If you didn't accept a wireless debugging request, or one didn't appear, make sure you're connected to a wireless network.</Label>
+                <Label Text="{x:Static resx:AppResources.WirelessDebuggingAuthorization}" />
                 <Button
                     x:Name="cycleWifiDebugging"
                     Clicked="cycleWifiDebugging_Clicked"
-                    Text="Try Again"  />
+                    Text="{x:Static resx:AppResources.TryAgain}"  />
             </VerticalStackLayout>
             <VerticalStackLayout
                 x:Name="authorizationLayout"
@@ -41,16 +41,16 @@
                 <Button
                     x:Name="restartAdbButton"
                     Clicked="restartAdbButton_Clicked"
-                    Text="Try Again"  />
+                    Text="{x:Static resx:AppResources.TryAgain}"  />
             </VerticalStackLayout>
             <VerticalStackLayout
                 x:Name="pairingLayout"
                 Spacing="25"
                 IsVisible="False">
-                <Label>Your quest is not connected via adb yet. Input the pairing code and port shown in the wireless adb pairing page.</Label>
+                <Label Text="{x:Static resx:AppResources.WirelessDebuggingAuthorization}" />
                 <Button
                     Clicked="launchSettingsButton_Clicked"
-                    Text="Launch Settings" />
+                    Text="{x:Static resx:AppResources.LaunchSettings}" />
                 <Grid ColumnSpacing="10" RowSpacing="10" Padding="0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -64,7 +64,7 @@
                     <!-- First row: Pairing Code -->
                     <Label Grid.Row="0"
                         Grid.Column="0"
-                        Text="Pairing Code:"
+                        Text="{x:Static resx:AppResources.PairingCode}"
                         HorizontalOptions="End"
                         VerticalOptions="Center" />
                     <Entry Grid.Row="0"
@@ -77,7 +77,7 @@
                     <Label Grid.Row="1"
                         Grid.Column="0"
                         x:Name="portLabel"
-                        Text="Port:"
+                        Text="{x:Static resx:AppResources.Port}"
                         HorizontalOptions="End"
                         VerticalOptions="Center" />
                     <Entry Grid.Row="1"
@@ -87,14 +87,14 @@
                         Keyboard="Numeric" />
                 </Grid>
                 <Button x:Name="pairingConfirmButton"
-                    Text="Pair"
+                    Text="{x:Static resx:AppResources.Pair}"
                     Clicked="pairingConfirmButton_Clicked" />
             </VerticalStackLayout>
             <VerticalStackLayout
                 x:Name="connectLayout"
                 Spacing="25"
                 IsVisible="False">
-                <Label>Pairing was successful! Please enter the wireless debugging port.</Label>
+                <Label Text="{x:Static resx:AppResources.PairingSuccessful}" />
                 <Grid ColumnSpacing="10" RowSpacing="10" Padding="0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -102,7 +102,7 @@
                     </Grid.ColumnDefinitions>
                     <Label Grid.Row="0"
                         Grid.Column="0"
-                        Text="Port:"
+                        Text="{x:Static resx:AppResources.Port}"
                         HorizontalOptions="End"
                         VerticalOptions="Center" />
                     <Entry Grid.Row="0"
@@ -114,16 +114,16 @@
                 <Button
                     x:Name="postPairingConnectButton"
                     Clicked="postPairingConnectButton_Clicked"
-                    Text="Connect" />
+                    Text="{x:Static resx:AppResources.Connect}" />
             </VerticalStackLayout>
             <VerticalStackLayout x:Name="developerLayout" IsVisible="False" Spacing="25" Padding="0,25,0,0">
                 <Label>Developer Mode</Label>
-                <Picker x:Name="packagePicker" Title="Game Selection" />
-                <Button x:Name="TcpIpMode" Clicked="TcpIpMode_Clicked" Text="TCP IP Mode" />
-                <Button Clicked="restartAdbButton_Clicked" Text="Restart ADB" />
-                <Button Clicked="launchDeveloperSettingsButton_Clicked" Text="Launch Developer Settings" />
-                <Button Clicked="launchSettingsButton_Clicked" Text="Launch Settings" />
-                <Button Clicked="exitApp_Clicked" Text="Exit" />
+                <Picker x:Name="packagePicker" Title="{x:Static resx:AppResources.GameSelection}" />
+                <Button x:Name="TcpIpMode" Clicked="TcpIpMode_Clicked" Text="{x:Static resx:AppResources.TcpIpMode}" />
+                <Button Clicked="restartAdbButton_Clicked" Text="{x:Static resx:AppResources.RestartAdb}" />
+                <Button Clicked="launchDeveloperSettingsButton_Clicked" Text="{x:Static resx:AppResources.LaunchDeveloperSettings}" />
+                <Button Clicked="launchSettingsButton_Clicked" Text="{x:Static resx:AppResources.LaunchSettings}" />
+                <Button Clicked="exitApp_Clicked" Text="{x:Static resx:AppResources.Exit}" />
             </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>

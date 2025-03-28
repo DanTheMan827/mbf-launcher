@@ -22,7 +22,7 @@ namespace MBF_Launcher {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class AppResources {
+    public class AppResources {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -36,7 +36,7 @@ namespace MBF_Launcher {
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager {
+        public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("MBF_Launcher.AppResources", typeof(AppResources).Assembly);
@@ -51,7 +51,7 @@ namespace MBF_Launcher {
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture {
+        public static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
@@ -61,9 +61,18 @@ namespace MBF_Launcher {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Your quest is not connected via adb yet. Input the pairing code and port shown in the wireless adb pairing page..
+        /// </summary>
+        public static string AdbNotConnected {
+            get {
+                return ResourceManager.GetString("AdbNotConnected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Okay.
         /// </summary>
-        internal static string AlertDismiss {
+        public static string AlertDismiss {
             get {
                 return ResourceManager.GetString("AlertDismiss", resourceCulture);
             }
@@ -72,16 +81,25 @@ namespace MBF_Launcher {
         /// <summary>
         ///   Looks up a localized string similar to Bridge Process Terminated.
         /// </summary>
-        internal static string BridgeProcessTerminated {
+        public static string BridgeProcessTerminated {
             get {
                 return ResourceManager.GetString("BridgeProcessTerminated", resourceCulture);
             }
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Connect.
+        /// </summary>
+        public static string Connect {
+            get {
+                return ResourceManager.GetString("Connect", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Connecting on Port {0}.
         /// </summary>
-        internal static string ConnectingOnPort {
+        public static string ConnectingOnPort {
             get {
                 return ResourceManager.GetString("ConnectingOnPort", resourceCulture);
             }
@@ -90,7 +108,7 @@ namespace MBF_Launcher {
         /// <summary>
         ///   Looks up a localized string similar to Disconnecting Devices.
         /// </summary>
-        internal static string DisconnectingDevices {
+        public static string DisconnectingDevices {
             get {
                 return ResourceManager.GetString("DisconnectingDevices", resourceCulture);
             }
@@ -99,7 +117,7 @@ namespace MBF_Launcher {
         /// <summary>
         ///   Looks up a localized string similar to Enabling Wireless Debugging.
         /// </summary>
-        internal static string EnablingWirelessDebugging {
+        public static string EnablingWirelessDebugging {
             get {
                 return ResourceManager.GetString("EnablingWirelessDebugging", resourceCulture);
             }
@@ -108,7 +126,7 @@ namespace MBF_Launcher {
         /// <summary>
         ///   Looks up a localized string similar to Error.
         /// </summary>
-        internal static string Error {
+        public static string Error {
             get {
                 return ResourceManager.GetString("Error", resourceCulture);
             }
@@ -117,16 +135,34 @@ namespace MBF_Launcher {
         /// <summary>
         ///   Looks up a localized string similar to Error Starting Bridge.
         /// </summary>
-        internal static string ErrorStartingBridge {
+        public static string ErrorStartingBridge {
             get {
                 return ResourceManager.GetString("ErrorStartingBridge", resourceCulture);
             }
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Exit.
+        /// </summary>
+        public static string Exit {
+            get {
+                return ResourceManager.GetString("Exit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Game Selection.
+        /// </summary>
+        public static string GameSelection {
+            get {
+                return ResourceManager.GetString("GameSelection", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Getting Devices.
         /// </summary>
-        internal static string GettingDevices {
+        public static string GettingDevices {
             get {
                 return ResourceManager.GetString("GettingDevices", resourceCulture);
             }
@@ -135,16 +171,88 @@ namespace MBF_Launcher {
         /// <summary>
         ///   Looks up a localized string similar to Granting Permissions.
         /// </summary>
-        internal static string GrantingPermissions {
+        public static string GrantingPermissions {
             get {
                 return ResourceManager.GetString("GrantingPermissions", resourceCulture);
             }
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Launch Developer Settings.
+        /// </summary>
+        public static string LaunchDeveloperSettings {
+            get {
+                return ResourceManager.GetString("LaunchDeveloperSettings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Launch Settings.
+        /// </summary>
+        public static string LaunchSettings {
+            get {
+                return ResourceManager.GetString("LaunchSettings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open Browser.
+        /// </summary>
+        public static string OpenBrowser {
+            get {
+                return ResourceManager.GetString("OpenBrowser", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Pair.
+        /// </summary>
+        public static string Pair {
+            get {
+                return ResourceManager.GetString("Pair", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Pairing Code:.
+        /// </summary>
+        public static string PairingCode {
+            get {
+                return ResourceManager.GetString("PairingCode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Pairing was successful! Please enter the wireless debugging port..
+        /// </summary>
+        public static string PairingSuccessful {
+            get {
+                return ResourceManager.GetString("PairingSuccessful", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Port:.
+        /// </summary>
+        public static string Port {
+            get {
+                return ResourceManager.GetString("Port", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Restart ADB.
+        /// </summary>
+        public static string RestartAdb {
+            get {
+                return ResourceManager.GetString("RestartAdb", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Setting TCP IP Mode.
         /// </summary>
-        internal static string SettingTcpIpMode {
+        public static string SettingTcpIpMode {
             get {
                 return ResourceManager.GetString("SettingTcpIpMode", resourceCulture);
             }
@@ -153,9 +261,36 @@ namespace MBF_Launcher {
         /// <summary>
         ///   Looks up a localized string similar to Starting ADB.
         /// </summary>
-        internal static string StartingAdb {
+        public static string StartingAdb {
             get {
                 return ResourceManager.GetString("StartingAdb", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to TCP/IP Mode.
+        /// </summary>
+        public static string TcpIpMode {
+            get {
+                return ResourceManager.GetString("TcpIpMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Try Again.
+        /// </summary>
+        public static string TryAgain {
+            get {
+                return ResourceManager.GetString("TryAgain", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to If you didn&apos;t accept a wireless debugging request, or one didn&apos;t appear, make sure you&apos;re connected to a wireless network..
+        /// </summary>
+        public static string WirelessDebuggingAuthorization {
+            get {
+                return ResourceManager.GetString("WirelessDebuggingAuthorization", resourceCulture);
             }
         }
     }

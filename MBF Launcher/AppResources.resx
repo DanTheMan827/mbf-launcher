@@ -150,4 +150,49 @@
   <data name="StartingAdb" xml:space="preserve">
     <value>Starting ADB</value>
   </data>
+  <data name="OpenBrowser" xml:space="preserve">
+    <value>Open Browser</value>
+  </data>
+  <data name="WirelessDebuggingAuthorization" xml:space="preserve">
+    <value>If you didn't accept a wireless debugging request, or one didn't appear, make sure you're connected to a wireless network.</value>
+  </data>
+  <data name="TryAgain" xml:space="preserve">
+    <value>Try Again</value>
+  </data>
+  <data name="AdbNotConnected" xml:space="preserve">
+    <value>Your quest is not connected via adb yet. Input the pairing code and port shown in the wireless adb pairing page.</value>
+  </data>
+  <data name="PairingSuccessful" xml:space="preserve">
+    <value>Pairing was successful! Please enter the wireless debugging port.</value>
+  </data>
+  <data name="Port" xml:space="preserve">
+    <value>Port:</value>
+  </data>
+  <data name="Connect" xml:space="preserve">
+    <value>Connect</value>
+  </data>
+  <data name="GameSelection" xml:space="preserve">
+    <value>Game Selection</value>
+  </data>
+  <data name="TcpIpMode" xml:space="preserve">
+    <value>TCP/IP Mode</value>
+  </data>
+  <data name="RestartAdb" xml:space="preserve">
+    <value>Restart ADB</value>
+  </data>
+  <data name="LaunchSettings" xml:space="preserve">
+    <value>Launch Settings</value>
+  </data>
+  <data name="LaunchDeveloperSettings" xml:space="preserve">
+    <value>Launch Developer Settings</value>
+  </data>
+  <data name="Exit" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="Pair" xml:space="preserve">
+    <value>Pair</value>
+  </data>
+  <data name="PairingCode" xml:space="preserve">
+    <value>Pairing Code:</value>
+  </data>
 </root>
