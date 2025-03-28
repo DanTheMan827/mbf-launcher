@@ -191,7 +191,7 @@ namespace MBF_Launcher
             }
 
             State = PageState.Initializing;
-            statusLabel.Text = String.Format(PageStrings.ConnectingOnPort, port);
+            statusLabel.Text = string.Format(PageStrings.ConnectingOnPort, port);
             var device = await AdbWrapper.ConnectAsync("127.0.0.1", port);
 
             statusLabel.Text = PageStrings.GettingDevices;
@@ -241,7 +241,23 @@ namespace MBF_Launcher
                 await DisplayAlert(PageStrings.ErrorStartingBridge, ex.Message, PageStrings.AlertDismiss);
             }
 
-            await Navigation.PushAsync(new BrowserPage(PageStrings.BridgeAddress));
+            var address = PageStrings.BridgeAddress;
+
+            if (developerLayout.IsVisible)
+            {
+                address += "&dev=true";
+            }
+
+            if (packagePicker.SelectedIndex != -1)
+            {
+                var package = packagePicker.SelectedItem as String;
+                if (package != null)
+                {
+                    address += $"&game_id={package}";
+                }
+            }
+
+            await Navigation.PushAsync(new BrowserPage(address));
             return;
 
             try
@@ -453,6 +469,7 @@ namespace MBF_Launcher
 
             initialized = true;
 
+            await UpdatePackages();
             await LaunchMbf();
         }
 
@@ -483,7 +500,7 @@ namespace MBF_Launcher
                         if (port > 0)
                         {
                             State = PageState.Initializing;
-                            statusLabel.Text = String.Format(PageStrings.ConnectingOnPort, port);
+                            statusLabel.Text = string.Format(PageStrings.ConnectingOnPort, port);
                             var device = await AdbWrapper.ConnectAsync("127.0.0.1", port);
 
                             statusLabel.Text = PageStrings.GettingDevices;
@@ -580,6 +597,18 @@ namespace MBF_Launcher
             });
         }
 
+        private async Task UpdatePackages()
+        {
+            var output = await AdbWrapper.RunShellCommand(devices[0].Name, "pm list packages | sed 's/package://' | sort");
+
+            if (output.ExitCode == 0)
+            {
+                var packages = output.Output.Split("\n").Where(l => l.Trim() != "").Select(l => l.Trim()).ToList();
+                packagePicker.ItemsSource = packages;
+                packagePicker.SelectedIndex = packages.IndexOf("com.beatgames.beatsaber");
+            }
+        }
+
         /// <summary>
         /// Called when the page is loaded
         /// </summary>
@@ -591,7 +620,11 @@ namespace MBF_Launcher
 
             if (newWindow && initialized)
             {
-                _ = LaunchMbf();
+                _ = Task.Run(async () =>
+                {
+                    await UpdatePackages();
+                    await LaunchMbf();
+                });
             }
 
             if (!initialized)
@@ -661,19 +694,6 @@ namespace MBF_Launcher
             }
         }
 
-        private void Fish_Clicked(object sender, EventArgs e)
-        {
-            if (fishClicks < 5)
-            {
-                fishClicks++;
-            }
-
-            if (fishClicks >= 5)
-            {
-                developerLayout.IsVisible = true;
-                return;
-            }
-        }
         #endregion
 
         private void TcpIpMode_Clicked(object sender, EventArgs e)
@@ -700,6 +720,20 @@ namespace MBF_Launcher
         private void openBrowserButton_Clicked(object sender, EventArgs e)
         {
             _ = LaunchMbf();
+        }
+
+        private void Fish_Tapped(object sender, TappedEventArgs e)
+        {
+            if (fishClicks < 5)
+            {
+                fishClicks++;
+            }
+
+            if (fishClicks >= 5)
+            {
+                developerLayout.IsVisible = true;
+                return;
+            }
         }
     }
 

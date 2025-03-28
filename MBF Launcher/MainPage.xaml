@@ -11,7 +11,11 @@
             Padding="30,30"
             Spacing="0">
             <VerticalStackLayout Spacing="25">
-                <ImageButton x:Name="Fish" Source="fish.png" Clicked="Fish_Clicked" />
+                <Image x:Name="Fish" Source="fish.png" MaximumWidthRequest="300">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="Fish_Tapped" />
+                    </Image.GestureRecognizers>
+                </Image>
                 <Label x:Name="statusLabel" />
                 <Button x:Name="openBrowserButton" Clicked="openBrowserButton_Clicked" IsVisible="False" Text="Open Browser" />
             </VerticalStackLayout>
@@ -114,6 +118,7 @@
             </VerticalStackLayout>
             <VerticalStackLayout x:Name="developerLayout" IsVisible="False" Spacing="25" Padding="0,25,0,0">
                 <Label>Developer Mode</Label>
+                <Picker x:Name="packagePicker" Title="Game Selection" />
                 <Button x:Name="TcpIpMode" Clicked="TcpIpMode_Clicked" Text="TCP IP Mode" />
                 <Button Clicked="restartAdbButton_Clicked" Text="Restart ADB" />
                 <Button Clicked="launchDeveloperSettingsButton_Clicked" Text="Launch Developer Settings" />
