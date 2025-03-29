@@ -1,17 +1,21 @@
-﻿namespace MBF_Launcher
+﻿using DanTheMan827.OnDeviceADB;
+using Window = Microsoft.Maui.Controls.Window;
+
+namespace MBF_Launcher
 {
     public partial class App : Application
     {
-        private MainPage mainPage = new MainPage();
         public App()
         {
             InitializeComponent();
+
+            // Assigns ADB server port to a random available port
+            AdbServer.AdbPort = Helpers.GetAvailablePort();
         }
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            mainPage.newWindow = true;
-            return new Window(new NavigationPage(mainPage));
+            return new Window(new NavigationPage(new MainPage()));
         }
     }
 }

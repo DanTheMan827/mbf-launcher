@@ -14,11 +14,6 @@ namespace MBF_Launcher
         internal bool initialized = false;
 
         /// <summary>
-        /// If the page is being opened in a new window
-        /// </summary>
-        internal bool newWindow = true;
-
-        /// <summary>
         /// Service browser instance for discovering ADB pairing services
         /// </summary>
         ServiceBrowser serviceBrowser = new ServiceBrowser();
@@ -65,9 +60,6 @@ namespace MBF_Launcher
         public MainPage()
         {
             InitializeComponent();
-
-            // Assigns ADB server port to a random available port
-            AdbServer.AdbPort = Helpers.GetAvailablePort();
 
             // Configures the service browser to look for ADB pairing services
             serviceBrowser.ServiceAdded += this.ServiceBrowser_ServiceAdded;
@@ -529,21 +521,10 @@ namespace MBF_Launcher
         {
             State = PageState.Initializing;
 
-            if (newWindow && initialized)
-            {
-                _ = Task.Run(async () =>
-                {
-                    await UpdatePackages();
-                    await LaunchMbf();
-                });
-            }
-
             if (!initialized)
             {
                 _ = InitializeAdb();
             }
-
-            newWindow = false;
         }
 
         /// <summary>
