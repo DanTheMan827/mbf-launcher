@@ -88,6 +88,15 @@ namespace MBF_Launcher {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Checking Device.
+        /// </summary>
+        public static string CheckingDevice {
+            get {
+                return ResourceManager.GetString("CheckingDevice", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Connect.
         /// </summary>
         public static string Connect {
@@ -196,6 +205,15 @@ namespace MBF_Launcher {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No authorized devices found.
+        /// </summary>
+        public static string NoAuthorizedDevicesFound {
+            get {
+                return ResourceManager.GetString("NoAuthorizedDevicesFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Open Browser.
         /// </summary>
         public static string OpenBrowser {
@@ -232,6 +250,15 @@ namespace MBF_Launcher {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Pairing with Device.
+        /// </summary>
+        public static string PairingWithDevice {
+            get {
+                return ResourceManager.GetString("PairingWithDevice", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Port:.
         /// </summary>
         public static string Port {
@@ -250,6 +277,15 @@ namespace MBF_Launcher {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Scanning For Wireless Debug Port.
+        /// </summary>
+        public static string ScanningForWirelessDebugPort {
+            get {
+                return ResourceManager.GetString("ScanningForWirelessDebugPort", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Setting TCP IP Mode.
         /// </summary>
         public static string SettingTcpIpMode {
@@ -264,6 +300,15 @@ namespace MBF_Launcher {
         public static string StartingAdb {
             get {
                 return ResourceManager.GetString("StartingAdb", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Stopping ADB.
+        /// </summary>
+        public static string StoppingAdb {
+            get {
+                return ResourceManager.GetString("StoppingAdb", resourceCulture);
             }
         }
         

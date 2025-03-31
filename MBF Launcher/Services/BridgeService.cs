@@ -9,15 +9,33 @@ namespace MBF_Launcher.Services
     public partial class BridgeService : IBridgeService
     {
         /// <summary>
+        /// A lazy backing field for the singleton instance of the bridge service.
+        /// </summary>
+        private static Lazy<BridgeService> _instance = new(() => new BridgeService());
+
+        /// <summary>
         /// Singleton instance of the bridge service.
         /// </summary>
-        public static BridgeService Instance { get; } = new BridgeService();
+        public static BridgeService Instance => _instance.Value;
 
+        /// <summary>
+        /// Raised when the bridge process exits.
+        /// </summary>
         public event IBridgeService.BridgeExitedEventHandler? BridgeExited;
+
+        /// <summary>
+        /// Raised when the bridge sends a message.
+        /// </summary>
         public event IBridgeService.BridgeMessageEventHandler? BridgeMessage;
 
+        /// <summary>
+        /// Whether the bridge process is running.
+        /// </summary>
         public bool IsRunning => _bridgeProcess != null && !_bridgeProcess.HasExited;
 
+        /// <summary>
+        /// Information about the bridge process.
+        /// </summary>
         public StartupInfo? StartupInfo { get; private set; }
 
         /// <summary>

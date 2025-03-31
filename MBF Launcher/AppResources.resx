@@ -195,4 +195,19 @@
   <data name="PairingCode" xml:space="preserve">
     <value>Pairing Code:</value>
   </data>
+  <data name="PairingWithDevice" xml:space="preserve">
+    <value>Pairing with Device</value>
+  </data>
+  <data name="ScanningForWirelessDebugPort" xml:space="preserve">
+    <value>Scanning For Wireless Debug Port</value>
+  </data>
+  <data name="CheckingDevice" xml:space="preserve">
+    <value>Checking Device</value>
+  </data>
+  <data name="StoppingAdb" xml:space="preserve">
+    <value>Stopping ADB</value>
+  </data>
+  <data name="NoAuthorizedDevicesFound" xml:space="preserve">
+    <value>No authorized devices found</value>
+  </data>
 </root>
