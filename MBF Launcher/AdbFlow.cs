@@ -1,5 +1,4 @@
 ﻿using DanTheMan827.OnDeviceADB;
-using System.Text.Json.Serialization;
 using Tmds.MDns;
 
 namespace MBF_Launcher
@@ -99,11 +98,7 @@ namespace MBF_Launcher
         /// </summary>
         public class FlowMessage
         {
-            [JsonIgnore]
             public Type MessageType { get; protected set; }
-
-            [JsonPropertyName("MessageType")]
-            private string MessageTypeString => MessageType.Name;
         }
 
         /// <summary>
