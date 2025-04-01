@@ -412,7 +412,15 @@ namespace MBF_Launcher
                         // Try to connect to the device
                         LastStatus = string.Format(FlowStrings.ConnectingOnPort, port);
                         State = AdbFlowState.Connecting;
-                        var device = await AdbWrapper.ConnectAsync("127.0.0.1", port);
+
+                        try
+                        {
+                            await AdbWrapper.ConnectAsync("127.0.0.1", port);
+                        }
+                        catch (Exception)
+                        {
+                            await AdbWrapper.DisconnectAsync();
+                        }
 
                         await UpdateDevices();
 
@@ -455,7 +463,7 @@ namespace MBF_Launcher
                 }
                 else
                 {
-                    Thread.Sleep(500);
+                    await Task.Delay(500);
                 }
             }
 
