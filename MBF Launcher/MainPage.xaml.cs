@@ -139,6 +139,7 @@ namespace MBF_Launcher
 
         private enum Layouts
         {
+            None,
             Status,
             WiFi,
             WiFiEnabling,
@@ -185,6 +186,18 @@ namespace MBF_Launcher
                     });
                     break;
 
+                case AdbFlow.AdbPortScanAttempt message:
+                    switch (Flow.State)
+                    {
+                        case AdbFlow.AdbFlowState.EnablingWirelessDebugging:
+                            await ShowOneLayout(message.Payload > 0 ? Layouts.WiFiEnabling : Layouts.Status);
+                            break;
+
+                        case AdbFlow.AdbFlowState.WaitingForWirelessDebugging:
+                            break;
+                    }
+                    break;
+
                 case AdbFlow.StateChange message:
                     switch (message.Payload)
                     {
@@ -217,8 +230,7 @@ namespace MBF_Launcher
 
                         case AdbFlow.AdbFlowState.EnablingWirelessDebugging:
                             // We're waiting for the user to accept the wireless debugging prompt
-                            await MainThread.InvokeOnMainThreadAsync(() => statusLabel.IsVisible = false);
-                            await ShowOneLayout(Layouts.WiFiEnabling);
+                            await ShowOneLayout(Layouts.Status);
                             break;
 
                         case AdbFlow.AdbFlowState.WaitingForPairingInfo:

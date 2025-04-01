@@ -149,6 +149,14 @@ namespace MBF_Launcher
         }
 
         /// <summary>
+        /// Message that is sent when the flow is attempting to scan for the wireless debug port.
+        /// </summary>
+        public class AdbPortScanAttempt : FlowMessage<AdbPortScanAttempt, int>
+        {
+            public AdbPortScanAttempt(int payload) : base(payload) { }
+        }
+
+        /// <summary>
         /// Message that is sent when the detected wireless debug pairing port changes.
         /// </summary>
         public class PairingPortChange : FlowMessage<PairingPortChange, ushort?>
@@ -452,9 +460,11 @@ namespace MBF_Launcher
         private async Task<UInt16> WaitForAdbPort()
         {
             UInt16 port = 0;
+            int attempt = 0;
 
             while (port == 0)
             {
+                SendMessage(new AdbPortScanAttempt(attempt++));
                 port = await Helpers.GetAdbPort();
 
                 if (port > 0)
