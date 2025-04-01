@@ -210,4 +210,10 @@
   <data name="NoAuthorizedDevicesFound" xml:space="preserve">
     <value>No authorized devices found</value>
   </data>
+  <data name="EnableWirelessDebugging" xml:space="preserve">
+    <value>Please open the developer settings, scroll down to Wireless Debugging, and enable it to continue.</value>
+  </data>
+  <data name="WaitingForWirelessDebugging" xml:space="preserve">
+    <value>Waiting for Wireless Debugging</value>
+  </data>
 </root>

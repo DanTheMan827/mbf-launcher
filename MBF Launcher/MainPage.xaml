@@ -35,6 +35,16 @@
                 IsVisible="False"
                 Spacing="25"
                 Padding="0,25,0,0">
+                <Label Text="{x:Static local:AppResources.EnableWirelessDebugging}" />
+                <Button
+                    Clicked="launchDeveloperSettingsButton_Clicked"
+                    Text="{x:Static local:AppResources.LaunchDeveloperSettings}" />
+            </VerticalStackLayout>
+            <VerticalStackLayout
+                x:Name="wifiEnablingLayout"
+                IsVisible="False"
+                Spacing="25"
+                Padding="0,25,0,0">
                 <Label Text="{x:Static local:AppResources.WirelessDebuggingAuthorization}" />
                 <Button
                     x:Name="cycleWifiDebugging"
@@ -58,8 +68,8 @@
                 Padding="0,25,0,0">
                 <Label Text="{x:Static local:AppResources.WirelessDebuggingAuthorization}" />
                 <Button
-                    Clicked="launchSettingsButton_Clicked"
-                    Text="{x:Static local:AppResources.LaunchSettings}" />
+                    Clicked="launchDeveloperSettingsButton_Clicked"
+                    Text="{x:Static local:AppResources.LaunchDeveloperSettings}" />
                 <Grid 
                     ColumnSpacing="10" 
                     RowSpacing="10" 

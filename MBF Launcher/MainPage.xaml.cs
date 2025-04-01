@@ -141,6 +141,7 @@ namespace MBF_Launcher
         {
             Status,
             WiFi,
+            WiFiEnabling,
             Authorization,
             Pairing,
             Connect,
@@ -157,6 +158,7 @@ namespace MBF_Launcher
             {
                 statusLayout.IsVisible = statusLayout.IsEnabled = layout == Layouts.Status;
                 wifiLayout.IsVisible = wifiLayout.IsEnabled = layout == Layouts.WiFi;
+                wifiEnablingLayout.IsVisible = wifiEnablingLayout.IsEnabled = layout == Layouts.WiFiEnabling;
                 authorizationLayout.IsVisible = authorizationLayout.IsEnabled = layout == Layouts.Authorization;
                 pairingLayout.IsVisible = pairingLayout.IsEnabled = layout == Layouts.Pairing;
                 connectLayout.IsVisible = connectLayout.IsEnabled = layout == Layouts.Connect;
@@ -209,7 +211,14 @@ namespace MBF_Launcher
 
                         case AdbFlow.AdbFlowState.WaitingForWirelessDebugging:
                             // We're waiting for the user to enable wireless debugging
+                            await MainThread.InvokeOnMainThreadAsync(() => statusLabel.IsVisible = false);
                             await ShowOneLayout(Layouts.WiFi);
+                            break;
+
+                        case AdbFlow.AdbFlowState.EnablingWirelessDebugging:
+                            // We're waiting for the user to accept the wireless debugging prompt
+                            await MainThread.InvokeOnMainThreadAsync(() => statusLabel.IsVisible = false);
+                            await ShowOneLayout(Layouts.WiFiEnabling);
                             break;
 
                         case AdbFlow.AdbFlowState.WaitingForPairingInfo:

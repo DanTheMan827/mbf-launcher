@@ -124,6 +124,15 @@ namespace MBF_Launcher {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Please open the developer settings, scroll down to Wireless Debugging, and enable it to continue..
+        /// </summary>
+        public static string EnableWirelessDebugging {
+            get {
+                return ResourceManager.GetString("EnableWirelessDebugging", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Enabling Wireless Debugging.
         /// </summary>
         public static string EnablingWirelessDebugging {
@@ -327,6 +336,15 @@ namespace MBF_Launcher {
         public static string TryAgain {
             get {
                 return ResourceManager.GetString("TryAgain", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Waiting for Wireless Debugging.
+        /// </summary>
+        public static string WaitingForWirelessDebugging {
+            get {
+                return ResourceManager.GetString("WaitingForWirelessDebugging", resourceCulture);
             }
         }
         

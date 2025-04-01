@@ -32,6 +32,13 @@ namespace MBF_Launcher
             WaitingForAuthorization,
 
             /// <summary>
+            /// 3. The flow is enabling wireless debugging.
+            /// 
+            /// An ideal state for the window would be to show a loading spinner with status text and a button to cycle Wi-Fi debugging to "Try Again".
+            /// </summary>
+            EnablingWirelessDebugging,
+
+            /// <summary>
             /// 3. The flow is waiting for wireless debugging to be enabled.
             /// 
             /// An ideal state for the window would be to show a message stating that the user needs to enable wireless debugging on the device with a button to open the developer settings.
@@ -83,6 +90,7 @@ namespace MBF_Launcher
             public static readonly string GettingDevices = AppResources.GettingDevices;
             public static readonly string DisconnectingDevices = AppResources.DisconnectingDevices;
             public static readonly string EnablingWirelessDebugging = AppResources.EnablingWirelessDebugging;
+            public static readonly string WaitingForWirelessDebugging = AppResources.WaitingForWirelessDebugging;
             public static readonly string CheckingDevice = AppResources.CheckingDevice;
             public static readonly string PairingWithDevice = AppResources.PairingWithDevice;
             public static readonly string ScanningForWirelessDebugPort = AppResources.ScanningForWirelessDebugPort;
@@ -372,6 +380,7 @@ namespace MBF_Launcher
             {
                 try
                 {
+
                     await EnableWifiDebug();
                 }
                 catch (Exception ex) { }
@@ -388,11 +397,39 @@ namespace MBF_Launcher
                 await UpdateDevices();
             }
 
+            // We need to wait for the user to enable wireless debugging
             if (Devices.Length == 0)
             {
-                LastStatus = null;
-                State = AdbFlowState.WaitingForWirelessDebugging;
-                return;
+                while (true)
+                {
+                    // If we aren't waiting for pairing info, debug port, connecting, or connected, wait for wireless debugging
+                    if (!(State == AdbFlowState.WaitingForPairingInfo || State == AdbFlowState.WaitingForDebugPort || State == AdbFlowState.Connecting || State == AdbFlowState.Connected))
+                    {
+                        LastStatus = FlowStrings.WaitingForWirelessDebugging;
+                        State = AdbFlowState.WaitingForWirelessDebugging;
+                        var port = await WaitForAdbPort();
+
+                        // Try to connect to the device
+                        LastStatus = string.Format(FlowStrings.ConnectingOnPort, port);
+                        State = AdbFlowState.Connecting;
+                        var device = await AdbWrapper.ConnectAsync("127.0.0.1", port);
+
+                        await UpdateDevices();
+
+                        if (Devices.Length == 0)
+                        {
+                            // We don't have and devices, so wait for the pairing info.
+                            // We don't break the loop in case the user disables wireless debugging and we need to run another iteration.
+                            LastStatus = null;
+                            State = AdbFlowState.WaitingForPairingInfo;
+                        }
+                        else
+                        {
+                            // We have a device, so we can break the loop.
+                            break;
+                        }
+                    }
+                }
             }
 
             await DeviceConnected();
@@ -401,19 +438,15 @@ namespace MBF_Launcher
         }
 
         /// <summary>
-        /// Enables wireless debugging and connects to the device
+        /// Waits for the wireless debug port to be available.
         /// </summary>
         /// <returns></returns>
-        private async Task EnableWifiDebug()
+        private async Task<UInt16> WaitForAdbPort()
         {
-            LastStatus = FlowStrings.EnablingWirelessDebugging;
-
-            AdbWrapper.AdbWifiState = AdbWifiState.Enabled;
             UInt16 port = 0;
 
             while (port == 0)
             {
-                LastStatus = FlowStrings.ScanningForWirelessDebugPort;
                 port = await Helpers.GetAdbPort();
 
                 if (port > 0)
@@ -426,8 +459,25 @@ namespace MBF_Launcher
                 }
             }
 
-            State = AdbFlowState.Connecting;
+            return port;
+        }
+
+        /// <summary>
+        /// Enables wireless debugging and connects to the device
+        /// </summary>
+        /// <returns></returns>
+        private async Task EnableWifiDebug()
+        {
+            LastStatus = FlowStrings.EnablingWirelessDebugging;
+            State = AdbFlowState.EnablingWirelessDebugging;
+
+            AdbWrapper.AdbWifiState = AdbWifiState.Enabled;
+
+            LastStatus = FlowStrings.ScanningForWirelessDebugPort;
+            var port = await WaitForAdbPort();
+
             LastStatus = string.Format(FlowStrings.ConnectingOnPort, port);
+            State = AdbFlowState.Connecting;
             var device = await AdbWrapper.ConnectAsync("127.0.0.1", port);
 
             await UpdateDevices();
@@ -444,8 +494,8 @@ namespace MBF_Launcher
         {
             try
             {
-                State = AdbFlowState.WirelessDebugPairing;
                 LastStatus = FlowStrings.PairingWithDevice;
+                State = AdbFlowState.WirelessDebugPairing;
 
                 var pairResult = await AdbWrapper.RunAdbCommandAsync("pair", $"127.0.0.1:{pairingPort}", pairingCode.ToString());
 
@@ -464,8 +514,8 @@ namespace MBF_Launcher
 
                         if (port > 0)
                         {
-                            State = AdbFlowState.Connecting;
                             LastStatus = string.Format(FlowStrings.ConnectingOnPort, port);
+                            State = AdbFlowState.Connecting;
 
                             var device = await AdbWrapper.ConnectAsync("127.0.0.1", port);
 
@@ -621,8 +671,8 @@ namespace MBF_Launcher
         /// </summary>
         public void SendState()
         {
-            SendMessage(new StateChange(State));
             SendMessage(new StatusMessage(LastStatus));
+            SendMessage(new StateChange(State));
             SendMessage(new DevicesChanged(Devices));
         }
     }
