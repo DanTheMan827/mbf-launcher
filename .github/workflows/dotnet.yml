@@ -53,9 +53,24 @@ jobs:
       shell: bash
       run: |
         if [[ "${{ steps.extract_version.outputs.VERSION }}" == "" ]]; then
-          dotnet build "MBF Launcher/MBF Launcher.csproj" -c Release -f net8.0-android34.0 /p:AndroidSigningKeyStore=myapp.keystore /p:AndroidSigningKeyAlias=com.dantheman827.mbflauncher /p:AndroidSigningKeyPass="${{ secrets.KEYSTORE_PASSWORD }}" /p:AndroidSigningStorePass="${{ secrets.KEYSTORE_PASSWORD }}" --no-restore
+          dotnet build "MBF Launcher/MBF Launcher.csproj" \
+            -c Release \
+            -f net8.0-android34.0 \
+            /p:AndroidSigningKeyStore=myapp.keystore \
+            /p:AndroidSigningKeyAlias=com.dantheman827.mbflauncher \
+            /p:AndroidSigningKeyPass="${{ secrets.KEYSTORE_PASSWORD }}" \
+            /p:AndroidSigningStorePass="${{ secrets.KEYSTORE_PASSWORD }}" \
+            --no-restore
         else
-          dotnet build "MBF Launcher/MBF Launcher.csproj" -c Release -f net8.0-android34.0 /p:AndroidSigningKeyStore=myapp.keystore /p:AndroidSigningKeyAlias=com.dantheman827.mbflauncher /p:AndroidSigningKeyPass="${{ secrets.KEYSTORE_PASSWORD }}" /p:AndroidSigningStorePass="${{ secrets.KEYSTORE_PASSWORD }}" "/p:Version=${{ steps.extract_version.outputs.VERSION }}" --no-restore
+          dotnet build "MBF Launcher/MBF Launcher.csproj" \
+            -c Release \
+            -f net8.0-android34.0 \
+            /p:Version="${{ steps.extract_version.outputs.VERSION }}" \
+            /p:AndroidSigningKeyStore=myapp.keystore \
+            /p:AndroidSigningKeyAlias=com.dantheman827.mbflauncher \
+            /p:AndroidSigningKeyPass="${{ secrets.KEYSTORE_PASSWORD }}" \
+            /p:AndroidSigningStorePass="${{ secrets.KEYSTORE_PASSWORD }}" \
+            --no-restore
         fi
 
     - name: Upload a Build Artifact
