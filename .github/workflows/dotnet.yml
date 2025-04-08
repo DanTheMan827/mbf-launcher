@@ -3,16 +3,17 @@ name: Build .NET MAUI App Android
 on:
   push:
     branches: [ "*" ]
+    tags: [ "v*" ]
 
   pull_request:
     branches: [ "*" ]
 
-
-
 jobs:
   build:
-
     runs-on: windows-latest
+    outputs:
+      version: ${{ steps.extract_version.outputs.VERSION }}
+      pre_release: ${{ steps.extract_version.outputs.PRE_RELEASE }}
 
     steps:
     - uses: actions/checkout@v4
@@ -35,12 +36,56 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
 
-    - name: Build
+    - name: Extract version from tag
+      if: startsWith(github.ref, 'refs/tags/')
+      id: extract_version
       run: |
-        dotnet build "MBF Launcher/MBF Launcher.csproj" -c Release -f net8.0-android34.0 /p:AndroidSigningKeyStore=myapp.keystore /p:AndroidSigningKeyAlias=com.dantheman827.mbflauncher /p:AndroidSigningKeyPass="${{ secrets.KEYSTORE_PASSWORD }}" /p:AndroidSigningStorePass="${{ secrets.KEYSTORE_PASSWORD }}" --no-restore
+        VERSION="${GITHUB_REF_NAME#v}"
+        if [[ "$VERSION" == *"-"* ]]; then
+          echo "PRE_RELEASE=true" >> $GITHUB_OUTPUT
+        else
+          echo "PRE_RELEASE=false" >> $GITHUB_OUTPUT
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Build
+      shell: bash
+      run: |
+        if [[ "${{ steps.extract_version.outputs.VERSION }}" == "" ]]; then
+          dotnet build "MBF Launcher/MBF Launcher.csproj" -c Release -f net8.0-android34.0 /p:AndroidSigningKeyStore=myapp.keystore /p:AndroidSigningKeyAlias=com.dantheman827.mbflauncher /p:AndroidSigningKeyPass="${{ secrets.KEYSTORE_PASSWORD }}" /p:AndroidSigningStorePass="${{ secrets.KEYSTORE_PASSWORD }}" --no-restore
+        else
+          dotnet build "MBF Launcher/MBF Launcher.csproj" -c Release -f net8.0-android34.0 /p:AndroidSigningKeyStore=myapp.keystore /p:AndroidSigningKeyAlias=com.dantheman827.mbflauncher /p:AndroidSigningKeyPass="${{ secrets.KEYSTORE_PASSWORD }}" /p:AndroidSigningStorePass="${{ secrets.KEYSTORE_PASSWORD }}" "/p:Version=${{ steps.extract_version.outputs.VERSION }}" --no-restore
+        fi
 
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v4
       with:
+        name: "artifact"
         path: |
           ./MBF Launcher/bin/Release/net8.0-android34.0/com.dantheman827.mbflauncher-Signed.apk
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write
+
+    steps:
+    - name: Download Build Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: artifact
+
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: |
+          *.apk
+        tag_name: ${{ github.ref_name }}
+        name: "MBF Launcher ${{ needs.build.outputs.version }}"
+        draft: false
+        prerelease: ${{ needs.build.outputs.pre_release }}
+        target_commitish: ${{ github.sha }}
+        generate_release_notes: true
