@@ -110,7 +110,7 @@ jobs:
       with:
         files: |
           *.apk
-        tag_name: ${{ github.ref_name }}
+        tag_name: ${{ needs.build.outputs.version }}
         name: "MBF Launcher ${{ needs.build.outputs.version }}"
         draft: false
         prerelease: ${{ needs.build.outputs.pre_release }}
