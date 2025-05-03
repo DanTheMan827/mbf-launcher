@@ -391,7 +391,12 @@ namespace MBF_Launcher
 
                     await EnableWifiDebug();
                 }
-                catch (Exception ex) { }
+                catch (Exception ex)
+                {
+                    await AdbWrapper.DisconnectAsync();
+                    State = AdbFlowState.Initializing;
+                    await UpdateDevices();
+                }
             }
 
             while (AuthorizedDevices.Length == 0 && UnauthorizedDevices.Length > 0)
@@ -523,6 +528,7 @@ namespace MBF_Launcher
                 }
                 else
                 {
+                    await AdbWrapper.DisconnectAsync();
                     await UpdateDevices(FlowStrings.CheckingDevice);
 
                     if (AuthorizedDevices.Length == 0)

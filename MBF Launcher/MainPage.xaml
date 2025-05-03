@@ -66,7 +66,7 @@
                 IsVisible="False"
                 Spacing="25"
                 Padding="0,25,0,0">
-                <Label Text="{x:Static local:AppResources.WirelessDebuggingAuthorization}" />
+                <Label Text="{x:Static local:AppResources.PairingInstructions}" />
                 <Button
                     Clicked="launchDeveloperSettingsButton_Clicked"
                     Text="{x:Static local:AppResources.LaunchDeveloperSettings}" />
@@ -95,6 +95,7 @@
                         Grid.Column="1"
                         x:Name="pairingCodeEntry"
                         IsTextPredictionEnabled="False"
+                        TextChanged="pairingCodeEntry_TextChanged"
                         Keyboard="Numeric" />
 
                     <!-- Second row: Port -->

@@ -216,4 +216,7 @@
   <data name="WaitingForWirelessDebugging" xml:space="preserve">
     <value>Waiting for Wireless Debugging</value>
   </data>
+  <data name="PairingInstructions" xml:space="preserve">
+    <value>To pair your device, open the developer settings, scroll to Wireless Debugging, and turn it on. Then, select Pair with pairing code. Enter the pairing code shown in your device’s settings into the text field below.</value>
+  </data>
 </root>

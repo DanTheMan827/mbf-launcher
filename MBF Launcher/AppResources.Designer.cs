@@ -250,6 +250,15 @@ namespace MBF_Launcher {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to To pair your device, open the developer settings, scroll to Wireless Debugging, and turn it on. Then, select Pair with pairing code. Enter the pairing code shown in your device’s settings into the text field below..
+        /// </summary>
+        public static string PairingInstructions {
+            get {
+                return ResourceManager.GetString("PairingInstructions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Pairing was successful! Please enter the wireless debugging port..
         /// </summary>
         public static string PairingSuccessful {

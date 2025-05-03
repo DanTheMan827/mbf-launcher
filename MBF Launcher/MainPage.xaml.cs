@@ -339,15 +339,21 @@ namespace MBF_Launcher
         private void pairingConfirmButton_Clicked(object sender, EventArgs e)
         {
             pairingConfirmButton.Focus();
-            UInt16 port;
-            int pairingCode;
-            if (UInt16.TryParse(portEntry.Text, out port) && int.TryParse(pairingCodeEntry.Text, out pairingCode))
+
+            if (UInt16.TryParse(portEntry.Text, out var port) && int.TryParse(pairingCodeEntry.Text, out var pairingCode))
             {
                 Flow.ProvideWirelessDebugPairingInfo(pairingCodeEntry.Text.Trim(), port);
             }
             else
             {
                 DisplayAlert(AppResources.Error, "Please check the format of the port and pairing code, only numbers should be entered.", AppResources.AlertDismiss);
+            }
+        }
+        private void pairingCodeEntry_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (int.TryParse(pairingCodeEntry.Text, out var pairingCode) && pairingCodeEntry.Text.Trim().Length == 6 && UInt16.TryParse(portEntry.Text, out var port))
+            {
+                pairingConfirmButton_Clicked(sender, e);
             }
         }
 
