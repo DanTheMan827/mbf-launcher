@@ -6,10 +6,8 @@
              xmlns:local="clr-namespace:MBF_Launcher"
              NavigationPage.HasNavigationBar="False">
     <ScrollView>
-        <VerticalStackLayout
-            Padding="30,30"
-            Spacing="0">
-            <VerticalStackLayout Spacing="25">
+        <local:SpacedLayout IsVisible="True" Padding="30,30">
+            <local:SpacedLayout IsVisible="True">
                 <Image x:Name="Fish" Source="fish.png" MaximumWidthRequest="300">
                     <Image.GestureRecognizers>
                         <TapGestureRecognizer Tapped="Fish_Tapped" />
@@ -20,52 +18,30 @@
                     FontAttributes="Bold" 
                     HorizontalOptions="Center" 
                     HorizontalTextAlignment="Center" />
-            </VerticalStackLayout>
-
-            <VerticalStackLayout
-                x:Name="statusLayout"
-                IsVisible="False"
-                Spacing="25" 
-                Padding="0,25,0,0">
+            </local:SpacedLayout>
+            <local:SpacedLayout x:Name="statusLayout">
                 <ActivityIndicator IsRunning="True" />
-            </VerticalStackLayout>
-
-            <VerticalStackLayout
-                x:Name="wifiLayout"
-                IsVisible="False"
-                Spacing="25"
-                Padding="0,25,0,0">
+            </local:SpacedLayout>
+            <local:SpacedLayout x:Name="wifiLayout">
                 <Label Text="{x:Static local:AppResources.EnableWirelessDebugging}" />
                 <Button
                     Clicked="launchDeveloperSettingsButton_Clicked"
                     Text="{x:Static local:AppResources.LaunchDeveloperSettings}" />
-            </VerticalStackLayout>
-            <VerticalStackLayout
-                x:Name="wifiEnablingLayout"
-                IsVisible="False"
-                Spacing="25"
-                Padding="0,25,0,0">
+            </local:SpacedLayout>
+            <local:SpacedLayout x:Name="wifiEnablingLayout">
                 <Label Text="{x:Static local:AppResources.WirelessDebuggingAuthorization}" />
                 <Button
                     x:Name="cycleWifiDebugging"
                     Clicked="cycleWifiDebugging_Clicked"
                     Text="{x:Static local:AppResources.TryAgain}"  />
-            </VerticalStackLayout>
-            <VerticalStackLayout
-                x:Name="authorizationLayout"
-                IsVisible="False"
-                Spacing="25"
-                Padding="0,25,0,0">
+            </local:SpacedLayout>
+            <local:SpacedLayout x:Name="authorizationLayout">
                 <Button
                     x:Name="restartAdbButton"
                     Clicked="restartAdbButton_Clicked"
                     Text="{x:Static local:AppResources.TryAgain}"  />
-            </VerticalStackLayout>
-            <VerticalStackLayout
-                x:Name="pairingLayout"
-                IsVisible="False"
-                Spacing="25"
-                Padding="0,25,0,0">
+            </local:SpacedLayout>
+            <local:SpacedLayout x:Name="pairingLayout">
                 <Label Text="{x:Static local:AppResources.PairingInstructions}" />
                 <Button
                     Clicked="launchDeveloperSettingsButton_Clicked"
@@ -117,12 +93,8 @@
                     x:Name="pairingConfirmButton"
                     Text="{x:Static local:AppResources.Pair}"
                     Clicked="pairingConfirmButton_Clicked" />
-            </VerticalStackLayout>
-            <VerticalStackLayout
-                x:Name="connectLayout"
-                IsVisible="False"
-                Spacing="25"
-                Padding="0,25,0,0">
+            </local:SpacedLayout>
+            <local:SpacedLayout x:Name="connectLayout">
                 <Label Text="{x:Static local:AppResources.PairingSuccessful}" />
                 <Grid 
                     ColumnSpacing="10" 
@@ -149,12 +121,8 @@
                     x:Name="postPairingConnectButton"
                     Clicked="postPairingConnectButton_Clicked"
                     Text="{x:Static local:AppResources.Connect}" />
-            </VerticalStackLayout>
-            <VerticalStackLayout
-                x:Name="connectedLayout"
-                IsVisible="False"
-                Spacing="25"
-                Padding="0,25,0,0">
+            </local:SpacedLayout>
+            <local:SpacedLayout x:Name="connectedLayout">
                 <VerticalStackLayout>
                     <Label 
                         x:Name="devicesLabel" 
@@ -162,12 +130,8 @@
                         HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
                 <Button Clicked="openBrowserButton_Clicked" Text="{x:Static local:AppResources.OpenBrowser}" />
-            </VerticalStackLayout>
-            <VerticalStackLayout 
-                x:Name="developerLayout" 
-                IsVisible="False"
-                Spacing="25"
-                Padding="0,25,0,0">
+            </local:SpacedLayout>
+            <local:SpacedLayout x:Name="developerLayout">
                 <Label FontAttributes="Bold">Developer Options</Label>
                 <VerticalStackLayout>
                     <Label>Selected Game</Label>
@@ -181,8 +145,10 @@
                 <Button Clicked="restartAdbButton_Clicked" Text="{x:Static local:AppResources.RestartAdb}" />
                 <Button Clicked="launchDeveloperSettingsButton_Clicked" Text="{x:Static local:AppResources.LaunchDeveloperSettings}" />
                 <Button Clicked="launchSettingsButton_Clicked" Text="{x:Static local:AppResources.LaunchSettings}" />
+            </local:SpacedLayout>
+            <local:SpacedLayout x:Name="exitLayout">
                 <Button Clicked="exitApp_Clicked" Text="{x:Static local:AppResources.Exit}" />
-            </VerticalStackLayout>
-        </VerticalStackLayout>
+            </local:SpacedLayout>
+        </local:SpacedLayout>
     </ScrollView>
 </ContentPage>

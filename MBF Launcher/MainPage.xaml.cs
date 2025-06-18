@@ -164,6 +164,8 @@ namespace MBF_Launcher
                 pairingLayout.IsVisible = pairingLayout.IsEnabled = layout == Layouts.Pairing;
                 connectLayout.IsVisible = connectLayout.IsEnabled = layout == Layouts.Connect;
                 connectedLayout.IsVisible = connectedLayout.IsEnabled = layout == Layouts.Connected;
+                developerLayout.IsVisible = layout == Layouts.Connected && AppConfig.ShowDevOptions;
+                exitLayout.IsVisible = exitLayout.IsEnabled = layout == Layouts.Connected;
             });
         }
 
@@ -410,14 +412,23 @@ namespace MBF_Launcher
         /// <param name="e"></param>
         private void Fish_Tapped(object sender, TappedEventArgs e)
         {
-            if (fishTaps < 5)
-            {
-                fishTaps++;
-            }
+            fishTaps++;
 
             if (fishTaps >= 5)
             {
-                developerLayout.IsVisible = true;
+                fishTaps = 0;
+
+                // Toggle the developer layout visibility
+                AppConfig.ShowDevOptions = !developerLayout.IsVisible;
+
+                // Update the visibility of the developer layout and exit layout
+                developerLayout.IsVisible = !developerLayout.IsVisible;
+
+                if (developerLayout.IsVisible)
+                {
+                    exitLayout.IsVisible = developerLayout.IsVisible;
+                }
+
                 return;
             }
         }
