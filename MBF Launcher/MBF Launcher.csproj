@@ -1,60 +1,51 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net8.0-android</TargetFramework>
-    <RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
-		<!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
-		<!-- <TargetFrameworks>$(TargetFrameworks);net8.0-tizen</TargetFrameworks> -->
-
-		<!-- Note for MacCatalyst:
-		The default runtime is maccatalyst-x64, except in Release config, in which case the default is maccatalyst-x64;maccatalyst-arm64.
-		When specifying both architectures, use the plural <RuntimeIdentifiers> instead of the singular <RuntimeIdentifier>.
-		The Mac App Store will NOT accept apps with ONLY maccatalyst-arm64 indicated;
-		either BOTH runtimes must be indicated or ONLY macatalyst-x64. -->
-		<!-- For example: <RuntimeIdentifiers>maccatalyst-x64;maccatalyst-arm64</RuntimeIdentifiers> -->
+    <TargetFrameworks>net9.0-android</TargetFrameworks>
+    <RuntimeIdentifiers Condition="'$(Platform)'=='Release'">android-arm64</RuntimeIdentifiers>
 
 		<OutputType>Exe</OutputType>
 		<RootNamespace>MBF_Launcher</RootNamespace>
-		<UseMaui>true</UseMaui>
-		<SingleProject>true</SingleProject>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
+    <UseMaui>true</UseMaui>
+    <SingleProject>true</SingleProject>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
 
 		<!-- Display name -->
 		<ApplicationTitle>MBF Launcher</ApplicationTitle>
 
 		<!-- App Identifier -->
-		<ApplicationId>com.companyname.mbflauncher</ApplicationId>
+		<ApplicationId>com.dantheman827.mbflauncher</ApplicationId>
 
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>
 
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">29.0</SupportedOSPlatformVersion>
+    <!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
+    <WindowsPackageType>None</WindowsPackageType>
+
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">29.0</SupportedOSPlatformVersion>
 
 		<PackageIcon>Resources/AppIcon/icon.png</PackageIcon>
 
-		<TargetFrameworks>net8.0-android34.0</TargetFrameworks>
+</PropertyGroup>
 
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net8.0-android34.0|AnyCPU'">
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android|AnyCPU'">
 	  <AndroidPackageFormat>apk</AndroidPackageFormat>
 	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
 	  <AndroidLinkTool>r8</AndroidLinkTool>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net8.0-android34.0|AnyCPU'">
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|AnyCPU'">
 	  <AndroidCreatePackagePerAbi>True</AndroidCreatePackagePerAbi>
-	  <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<!-- App Icon -->
 		<MauiIcon Include="Resources\AppIcon\icon.png">
-		  <Color>#A7D6EA</Color>
+			<Color>#A7D6EA</Color>
 		</MauiIcon>
-    
+	
 		<!-- Splash Screen -->
 		<MauiSplashScreen Include="Resources\Splash\splash.png" Color="#A7D6EA" BaseSize="128,128" />
 
@@ -69,26 +60,31 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <AndroidResource Remove="Images\**" />
-	  <Compile Remove="Images\**" />
-	  <EmbeddedResource Remove="Images\**" />
-	  <MauiCss Remove="Images\**" />
-	  <MauiXaml Remove="Images\**" />
-	  <None Remove="Images\**" />
+		<AndroidResource Remove="Images\**" />
+		<Compile Remove="Images\**" />
+		<EmbeddedResource Remove="Images\**" />
+		<MauiCss Remove="Images\**" />
+		<MauiXaml Remove="Images\**" />
+		<None Remove="Images\**" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Remove="libs\arm64-v8a\libAdbFinder.so" />
-	  <None Remove="libs\arm64-v8a\libMbfBridge.so" />
-	  <None Remove="Resources\AppIcon\Icon.png" />
-	  <None Remove="Resources\Splash\Splash.png" />
+    <None Remove="libs\arm64-v8a\libAdbFinder.so" />
+    <None Remove="libs\arm64-v8a\libMbfBridge.so" />
+    <None Remove="libs\x86_64\libAdbFinder.so" />
+    <None Remove="libs\x86_64\libMbfBridge.so" />
+		<None Remove="Resources\AppIcon\Icon.png" />
+		<None Remove="Resources\Splash\Splash.png" />
 	</ItemGroup>
 
-  <ItemGroup>
+	<ItemGroup>
     <AndroidNativeLibrary Include="libs\arm64-v8a\libMbfBridge.so">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </AndroidNativeLibrary>
-  </ItemGroup>
+    <AndroidNativeLibrary Include="libs\x86_64\libMbfBridge.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AndroidNativeLibrary>
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
@@ -98,59 +94,56 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="Resources\Images\mbf.png">
-	    <Pack>True</Pack>
-	    <PackagePath>\</PackagePath>
-	  </None>
+		<None Update="Resources\Images\mbf.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
 	</ItemGroup>
 
 	<ItemGroup>
     <AndroidNativeLibrary Include="..\OnDeviceADB\libs\arm64-v8a\libadb.so" Link="libs\arm64-v8a\libadb.so">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </AndroidNativeLibrary>
+    <AndroidNativeLibrary Include="..\OnDeviceADB\libs\x86_64\libadb.so" Link="libs\x86_64\libadb.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AndroidNativeLibrary>
 	</ItemGroup>
 
 	<ItemGroup>
     <AndroidNativeLibrary Include="libs\arm64-v8a\libAdbFinder.so">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </AndroidNativeLibrary>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AndroidNativeLibrary>
+    <AndroidNativeLibrary Include="libs\x86_64\libAdbFinder.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </AndroidNativeLibrary>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Include="..\OnDeviceADB\AdbException.cs" Link="OnDeviceADB\AdbException.cs" />
-	  <Compile Include="..\OnDeviceADB\AdbSample.cs" Link="OnDeviceADB\AdbSample.cs" />
-	  <Compile Include="..\OnDeviceADB\AdbServer.cs" Link="OnDeviceADB\AdbServer.cs" />
-	  <Compile Include="..\OnDeviceADB\AdbWifiState.cs" Link="OnDeviceADB\AdbWifiState.cs" />
-	  <Compile Include="..\OnDeviceADB\AdbWrapper.cs" Link="OnDeviceADB\AdbWrapper.cs" />
-	  <Compile Include="..\OnDeviceADB\ExitInfo.cs" Link="OnDeviceADB\ExitInfo.cs" />
+		<Compile Include="..\OnDeviceADB\AdbException.cs" Link="OnDeviceADB\AdbException.cs" />
+		<Compile Include="..\OnDeviceADB\AdbSample.cs" Link="OnDeviceADB\AdbSample.cs" />
+		<Compile Include="..\OnDeviceADB\AdbServer.cs" Link="OnDeviceADB\AdbServer.cs" />
+		<Compile Include="..\OnDeviceADB\AdbWifiState.cs" Link="OnDeviceADB\AdbWifiState.cs" />
+		<Compile Include="..\OnDeviceADB\AdbWrapper.cs" Link="OnDeviceADB\AdbWrapper.cs" />
+		<Compile Include="..\OnDeviceADB\ExitInfo.cs" Link="OnDeviceADB\ExitInfo.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="OnDeviceADB\" />
+		<Folder Include="OnDeviceADB\" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Update="AppResources.Designer.cs">
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>AppResources.resx</DependentUpon>
-	  </Compile>
+		<Compile Update="AppResources.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>AppResources.resx</DependentUpon>
+		</Compile>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <EmbeddedResource Update="AppResources.resx">
-	    <Generator>PublicResXFileCodeGenerator</Generator>
-	    <LastGenOutput>AppResources.Designer.cs</LastGenOutput>
-	  </EmbeddedResource>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <MauiXaml Update="AppShell.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
-	  <MauiXaml Update="BrowserPage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
+		<EmbeddedResource Update="AppResources.resx">
+			<Generator>PublicResXFileCodeGenerator</Generator>
+			<LastGenOutput>AppResources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
 	</ItemGroup>
 
 </Project>
