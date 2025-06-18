@@ -1,11 +1,22 @@
 ﻿namespace MBF_Launcher
 {
-    internal class AppConfig
+    internal static class AppConfig
     {
-        public static AppConfig Instance = new AppConfig();
-        public string AppUrl = "https://dantheman827.github.io/ModsBeforeFriday/";
-        public string SelectedGame = "com.beatgames.beatsaber";
+        public static string AppUrl
+        {
+            get => Preferences.Default.Get("AppUrl", "https://dantheman827.github.io/ModsBeforeFriday/");
+            set => Preferences.Default.Set("AppUrl", value);
+        }
+        public static string SelectedGame
+        {
+            get => Preferences.Default.Get("SelectedGame", "com.beatgames.beatsaber");
+            set => Preferences.Default.Set("SelectedGame", value);
+        }
 
-        private AppConfig() { }
+        public static bool DevMode
+        {
+            get => Preferences.Default.Get("DevMode", false);
+            set => Preferences.Default.Set("DevMode", value);
+        }
     }
 }

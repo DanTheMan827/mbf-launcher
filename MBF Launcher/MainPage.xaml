@@ -171,11 +171,11 @@
                 <Label FontAttributes="Bold">Developer Options</Label>
                 <VerticalStackLayout>
                     <Label>Selected Game</Label>
-                    <Picker x:Name="packagePicker" Title="{x:Static local:AppResources.GameSelection}" />
+                    <Picker x:Name="packagePicker" Title="{x:Static local:AppResources.GameSelection}" SelectedIndexChanged="packagePicker_SelectedIndexChanged" />
                 </VerticalStackLayout>
                 <VerticalStackLayout>
                     <Label  VerticalOptions="Center">Dev Mode</Label>
-                    <CheckBox x:Name="mbfDevMode"  HorizontalOptions="Start" VerticalOptions="Center"  />
+                    <CheckBox x:Name="mbfDevMode"  HorizontalOptions="Start" VerticalOptions="Center" IsChecked="{x:Static local:AppConfig.DevMode}" CheckedChanged="mbfDevMode_CheckedChanged"  />
                 </VerticalStackLayout>
                 <Button x:Name="TcpIpMode" Clicked="TcpIpMode_Clicked" Text="{x:Static local:AppResources.TcpIpMode}" />
                 <Button Clicked="restartAdbButton_Clicked" Text="{x:Static local:AppResources.RestartAdb}" />

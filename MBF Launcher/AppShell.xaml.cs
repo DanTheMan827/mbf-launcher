@@ -1,4 +1,4 @@
-﻿namespace MBF_Launcher
+namespace MBF_Launcher
 {
     public partial class AppShell : Shell
     {

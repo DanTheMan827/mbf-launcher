@@ -68,7 +68,7 @@ namespace MBF_Launcher
                     await Bridge.Start(new BridgeService.BridgeStartInfo()
                     {
                         BinaryPath = Path.Combine(SharedData.NativeLibraryDir, "libMbfBridge.so"),
-                        AppUrl = AppConfig.Instance.AppUrl,
+                        AppUrl = AppConfig.AppUrl,
                         AdbPort = AdbServer.AdbPort
                     });
                 }
@@ -128,12 +128,12 @@ namespace MBF_Launcher
                     .Order()
                     .ToList();
                 await MainThread.InvokeOnMainThreadAsync(() => packagePicker.ItemsSource = packages);
-                if (!packages.Contains(AppConfig.Instance.SelectedGame))
+                if (!packages.Contains(AppConfig.SelectedGame))
                 {
-                    AppConfig.Instance.SelectedGame = "com.beatgames.beatsaber";
+                    AppConfig.SelectedGame = "com.beatgames.beatsaber";
                 }
 
-                await MainThread.InvokeOnMainThreadAsync(() => packagePicker.SelectedIndex = packages.IndexOf(AppConfig.Instance.SelectedGame));
+                await MainThread.InvokeOnMainThreadAsync(() => packagePicker.SelectedIndex = packages.IndexOf(AppConfig.SelectedGame));
             }
         }
 
@@ -422,6 +422,23 @@ namespace MBF_Launcher
             }
         }
         #endregion
+
+        private void packagePicker_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (packagePicker.SelectedIndex != -1)
+            {
+                var package = packagePicker.SelectedItem as String;
+                if (package != null)
+                {
+                    AppConfig.SelectedGame = packagePicker.SelectedItem as string ?? "com.beatgames.beatsaber";
+                }
+            }
+        }
+
+        private void mbfDevMode_CheckedChanged(object sender, CheckedChangedEventArgs e)
+        {
+            AppConfig.DevMode = mbfDevMode.IsChecked;
+        }
     }
 
 }
