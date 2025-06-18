@@ -67,7 +67,7 @@ jobs:
         if ([string]::IsNullOrEmpty("${{ steps.extract_version.outputs.VERSION }}")) {
           & dotnet build "MBF Launcher/MBF Launcher.csproj" `
             -c Release `
-            -f net8.0-android34.0 `
+            -f net9.0-android35.0 `
             /p:AndroidSigningKeyStore=myapp.keystore `
             /p:AndroidSigningKeyAlias=com.dantheman827.mbflauncher `
             /p:AndroidSigningKeyPass="${{ secrets.KEYSTORE_PASSWORD }}" `
@@ -76,7 +76,7 @@ jobs:
         } else {
           & dotnet build "MBF Launcher/MBF Launcher.csproj" `
             -c Release `
-            -f net8.0-android34.0 `
+            -f net9.0-android35.0 `
             /p:Version="${{ steps.extract_version.outputs.VERSION }}" `
             /p:AndroidSigningKeyStore=myapp.keystore `
             /p:AndroidSigningKeyAlias=com.dantheman827.mbflauncher `
@@ -90,7 +90,7 @@ jobs:
       with:
         name: "artifact"
         path: |
-          ./MBF Launcher/bin/Release/net8.0-android34.0/com.dantheman827.mbflauncher-Signed.apk
+          ./MBF Launcher/bin/Release/net9.0-android35.0/com.dantheman827.mbflauncher-Signed.apk
 
   release:
     if: ${{ needs.build.outputs.version != '' }}
