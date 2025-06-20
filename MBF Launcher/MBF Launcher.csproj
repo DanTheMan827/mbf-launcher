@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-    <TargetFrameworks>net9.0-android</TargetFrameworks>
+    <TargetFramework>net9.0-android</TargetFramework>
+    <TargetFrameworks>net9.0-android35.0</TargetFrameworks>
     <RuntimeIdentifiers Condition="'$(Platform)'=='Release'">android-arm64</RuntimeIdentifiers>
 
 		<OutputType>Exe</OutputType>
