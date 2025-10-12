@@ -138,7 +138,7 @@
                     <Picker x:Name="packagePicker" Title="{x:Static local:AppResources.GameSelection}" SelectedIndexChanged="packagePicker_SelectedIndexChanged" />
                 </VerticalStackLayout>
                 <VerticalStackLayout>
-                    <Label  VerticalOptions="Center">Dev Mode</Label>
+                    <Label  VerticalOptions="Center">Skip Game Version Check</Label>
                     <CheckBox x:Name="mbfDevMode"  HorizontalOptions="Start" VerticalOptions="Center" IsChecked="{x:Static local:AppConfig.DevMode}" CheckedChanged="mbfDevMode_CheckedChanged"  />
                 </VerticalStackLayout>
                 <Button x:Name="TcpIpMode" Clicked="TcpIpMode_Clicked" Text="{x:Static local:AppResources.TcpIpMode}" />
