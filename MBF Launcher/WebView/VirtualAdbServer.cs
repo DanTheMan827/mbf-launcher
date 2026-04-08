@@ -337,7 +337,7 @@ namespace MBF_Launcher.WebView
         /// </summary>
         private static string? GetSimulatedProp(string key)
         {
-            var abis   = Android.OS.Build.SupportedAbis ?? ["arm64-v8a"];
+            var abis   = Android.OS.Build.SupportedAbis?.ToArray() ?? new[] { "arm64-v8a" };
             var abis64 = abis.Where(Is64BitAbi).ToArray();
             var abis32 = abis.Where(a => !Is64BitAbi(a)).ToArray();
 

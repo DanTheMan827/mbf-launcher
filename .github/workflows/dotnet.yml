@@ -85,6 +85,8 @@ jobs:
             -c Release `
             -f net9.0-android35.0 `
             /p:Version="${{ steps.extract_version.outputs.VERSION }}" `
+            /p:ApplicationDisplayVersion="${{ steps.extract_version.outputs.VERSION }}" `
+            /p:ApplicationVersion="${{ github.run_number }}" `
             /p:AndroidSigningKeyStore=myapp.keystore `
             /p:AndroidSigningKeyAlias=com.dantheman827.mbflauncher `
             /p:AndroidSigningKeyPass="${{ secrets.KEYSTORE_PASSWORD }}" `
