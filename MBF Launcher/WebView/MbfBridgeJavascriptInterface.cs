@@ -180,17 +180,16 @@ namespace MBF_Launcher.WebView
         private sealed class Connection
         {
             public string Id { get; }
-            public TcpClient TcpClient { get; }
-            public NetworkStream Stream { get; }
+            public IAdbSocket Socket { get; }
+            public Stream Stream => Socket.Stream;
 
             /// <summary>Flow-control semaphore; starts full at <see cref="FlowWindow"/> permits.</summary>
             public SemaphoreSlim Semaphore { get; } = new(FlowWindow, FlowWindow);
 
-            public Connection(string id, TcpClient tcp)
+            public Connection(string id, IAdbSocket socket)
             {
                 Id = id;
-                TcpClient = tcp;
-                Stream = tcp.GetStream();
+                Socket = socket;
             }
         }
     }

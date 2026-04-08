@@ -7,7 +7,7 @@ namespace MBF_Launcher;
 
 public partial class BrowserPage : ContentPage
 {
-    private int _adbPort;
+    private IAdbSocketFactory? _socketFactory;
 
     /// <summary>Cached content of bridge.js, read once from app-package assets.</summary>
     private static string? _bridgeScript;
@@ -38,23 +38,32 @@ public partial class BrowserPage : ContentPage
             browser.OverScrollMode = OverScrollMode.Never;
 
             // Register the native ADB bridge so that bridge.js can wrap it
-            // as window.__mbfBridge.  The object is available to all JavaScript
-            // on the page from the moment the WebView processes any script.
-            browser.AddJavascriptInterface(
-                new MbfBridgeJavascriptInterface(webView, _adbPort),
-                "__mbfBridgeNative");
+            // as window.__mbfBridge.  The factory determines whether the bridge
+            // proxies a real ADB TCP connection or uses the virtual ADB server.
+            if (_socketFactory is not null)
+            {
+                browser.AddJavascriptInterface(
+                    new MbfBridgeJavascriptInterface(webView, _socketFactory),
+                    "__mbfBridgeNative");
+            }
         }
     }
 
     /// <summary>
     /// Opens <paramref name="url"/> directly in the WebView and registers the
-    /// ADB bridge JavaScript interface.
+    /// ADB bridge JavaScript interface backed by <paramref name="socketFactory"/>.
     /// </summary>
     /// <param name="url">URL to load (http/https or file:///android_asset/…).</param>
-    /// <param name="adbPort">Port the on-device ADB server is listening on.</param>
-    public BrowserPage(string url, int adbPort) : this()
+    /// <param name="socketFactory">
+    /// Controls which ADB socket implementation is used:
+    /// <list type="bullet">
+    ///   <item><see cref="TcpAdbSocketFactory"/> – proxies the real ADB TCP server.</item>
+    ///   <item><see cref="VirtualAdbServer"/>    – uses the in-process simulated server.</item>
+    /// </list>
+    /// </param>
+    public BrowserPage(string url, IAdbSocketFactory socketFactory) : this()
     {
-        _adbPort = adbPort;
+        _socketFactory = socketFactory;
         webView.Navigated += this.WebView_Navigated;
         webView.Source = new UrlWebViewSource { Url = url };
     }

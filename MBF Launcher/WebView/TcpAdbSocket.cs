@@ -23,6 +23,10 @@ namespace MBF_Launcher.WebView
         public void Close() => _tcp.Close();
 
         /// <inheritdoc/>
-        public void Dispose() => _tcp.Dispose();
+        public void Dispose()
+        {
+            _tcp.Dispose();
+            GC.SuppressFinalize(this);
+        }
     }
 }

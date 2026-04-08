@@ -1,4 +1,5 @@
 ﻿using DanTheMan827.OnDeviceADB;
+using MBF_Launcher.WebView;
 using System.Diagnostics;
 
 namespace MBF_Launcher
@@ -64,7 +65,8 @@ namespace MBF_Launcher
                 }
             }
 
-            MainThread.BeginInvokeOnMainThread(() => _ = Navigation.PushAsync(new BrowserPage(address, AdbServer.AdbPort)));
+            MainThread.BeginInvokeOnMainThread(() => _ = Navigation.PushAsync(
+                new BrowserPage(address, new TcpAdbSocketFactory("127.0.0.1", AdbServer.AdbPort))));
         }
 
         /// <summary>

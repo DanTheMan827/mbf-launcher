@@ -4,7 +4,7 @@ namespace MBF_Launcher.WebView
 {
     /// <summary>
     /// <see cref="IAdbSocketFactory"/> that opens TCP connections to a real ADB
-    /// server (e.g. the on-device <c>adbd</c> listening on <paramref name="port"/>).
+    /// server (e.g. the on-device <c>adbd</c> listening on a specific port).
     /// This preserves the original ADB TCP proxy behaviour of
     /// <see cref="MbfBridgeJavascriptInterface"/>.
     /// </summary>
