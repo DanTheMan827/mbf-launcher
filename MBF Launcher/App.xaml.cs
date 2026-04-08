@@ -38,32 +38,47 @@ namespace MBF_Launcher
 
         private async Task CheckForUpdatesAsync()
         {
+            Page? page = null;
             try
             {
                 var result = await UpdateService.CheckForUpdateAsync();
                 if (result is not { } update)
                     return;
 
-                var page = this.Windows.FirstOrDefault()?.Page;
+                page = this.Windows.FirstOrDefault()?.Page;
                 if (page == null)
                     return;
 
                 bool install = await MainThread.InvokeOnMainThreadAsync(
                     () => page.DisplayAlert(
                         "Update Available",
-                        $"Version {update.Release.TagName} is available. Install it now?",
+                        $"Version {update.Release.TagName.TrimStart('v')} is available. Install it now?",
                         "Install",
                         "Later"));
 
                 if (!install)
                     return;
 
-                var apkPath = await UpdateService.DownloadApkAsync(update.Apk.DownloadUrl);
+                string apkPath;
+                try
+                {
+                    apkPath = await UpdateService.DownloadApkAsync(update.Apk.DownloadUrl);
+                }
+                catch (Exception ex)
+                {
+                    await MainThread.InvokeOnMainThreadAsync(
+                        () => page.DisplayAlert(
+                            "Download Failed",
+                            $"Could not download the update: {ex.Message}",
+                            "OK"));
+                    return;
+                }
+
                 await InstallApkAsync(apkPath, page);
             }
             catch
             {
-                // Silently ignore update check / download failures.
+                // Silently ignore update check failures.
             }
         }
 
@@ -71,7 +86,10 @@ namespace MBF_Launcher
         {
 #if ANDROID
             var pm = Platform.AppContext.PackageManager;
-            if (pm != null && !pm.CanRequestPackageInstalls())
+            if (pm == null)
+                return;
+
+            if (!pm.CanRequestPackageInstalls())
             {
                 await MainThread.InvokeOnMainThreadAsync(
                     () => page.DisplayAlert(
