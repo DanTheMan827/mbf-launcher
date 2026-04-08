@@ -5,7 +5,7 @@ namespace MBF_Launcher.WebView
     /// Inject a different implementation to switch between the real ADB TCP
     /// server and a virtual/simulated one.
     /// </summary>
-    internal interface IAdbSocketFactory
+    public interface IAdbSocketFactory
     {
         /// <summary>
         /// Creates and returns a connected <see cref="IAdbSocket"/>.
