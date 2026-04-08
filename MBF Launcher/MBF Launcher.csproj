@@ -147,4 +147,13 @@
 		</EmbeddedResource>
 	</ItemGroup>
 
+	<!-- Compile the bridge TypeScript sources before the Android build. -->
+	<Target Name="CompileWebAssets" BeforeTargets="BeforeBuild"
+	        Condition="Exists('$(MSBuildProjectDirectory)/web/package.json')">
+		<Exec WorkingDirectory="$(MSBuildProjectDirectory)/web"
+		      Command="npm ci --prefer-offline" />
+		<Exec WorkingDirectory="$(MSBuildProjectDirectory)/web"
+		      Command="npx tsc" />
+	</Target>
+
 </Project>

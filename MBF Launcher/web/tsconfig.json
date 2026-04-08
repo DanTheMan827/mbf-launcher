@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "ES2019",
+    "module": "none",
+    "outDir": "../Resources/Raw",
+    "strict": true,
+    "lib": ["ES2019", "DOM"],
+    "removeComments": false
+  },
+  "include": ["src"]
+}

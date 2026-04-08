@@ -1,10 +1,17 @@
 using Android.Views;
 using Android.Webkit;
+using DanTheMan827.OnDeviceADB;
+using MBF_Launcher.WebView;
 
 namespace MBF_Launcher;
 
 public partial class BrowserPage : ContentPage
 {
+    private int _adbPort;
+
+    /// <summary>Cached content of bridge.js, read once from app-package assets.</summary>
+    private static string? _bridgeScript;
+
     public BrowserPage()
     {
         InitializeComponent();
@@ -29,37 +36,58 @@ public partial class BrowserPage : ContentPage
             settings.JavaScriptCanOpenWindowsAutomatically = false;
             browser.Focusable = true;
             browser.OverScrollMode = OverScrollMode.Never;
+
+            // Register the native ADB bridge so that bridge.js can wrap it
+            // as window.__mbfBridge.  The object is available to all JavaScript
+            // on the page from the moment the WebView processes any script.
+            browser.AddJavascriptInterface(
+                new MbfBridgeJavascriptInterface(webView, _adbPort),
+                "__mbfBridgeNative");
         }
     }
 
-    public BrowserPage(string url) : this()
+    /// <summary>
+    /// Opens <paramref name="url"/> directly in the WebView and registers the
+    /// ADB bridge JavaScript interface.
+    /// </summary>
+    /// <param name="url">URL to load (http/https or file:///android_asset/…).</param>
+    /// <param name="adbPort">Port the on-device ADB server is listening on.</param>
+    public BrowserPage(string url, int adbPort) : this()
     {
-        var source = new HtmlWebViewSource
+        _adbPort = adbPort;
+        webView.Navigated += this.WebView_Navigated;
+        webView.Source = new UrlWebViewSource { Url = url };
+    }
+
+    /// <summary>
+    /// Injects bridge.js after every successful navigation so that
+    /// <c>window.__mbfBridge</c> is available even on pages that do not bundle
+    /// it themselves.  The script is idempotent and safe to run multiple times.
+    /// </summary>
+    private async void WebView_Navigated(object? sender, WebNavigatedEventArgs e)
+    {
+        if (e.Result == WebNavigationResult.Success)
         {
-            Html = @"
-                <html>
-                <head>
-                    <style>
-                        body, html {
-                            margin: 0;
-                            padding: 0;
-                            height: 100%;
-                            width: 100%;
-                            overflow: hidden;
-                        }
-                        iframe {
-                            width: 100%;
-                            height: 100%;
-                            border: none;
-                            zoom: 0.85;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <iframe src='" + url + @"'></iframe>
-                </body>
-                </html>"
-        };
-        webView.Source = source;
+            await InjectBridgeScript();
+        }
+    }
+
+    private async Task InjectBridgeScript()
+    {
+        try
+        {
+            if (_bridgeScript == null)
+            {
+                using var stream = await FileSystem.OpenAppPackageFileAsync("bridge.js");
+                using var reader = new StreamReader(stream);
+                _bridgeScript = await reader.ReadToEndAsync();
+            }
+
+            await webView.EvaluateJavaScriptAsync(_bridgeScript);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[BrowserPage] Failed to inject bridge.js: {ex.Message}");
+        }
     }
 }

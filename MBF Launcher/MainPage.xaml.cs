@@ -1,5 +1,4 @@
 ﻿using DanTheMan827.OnDeviceADB;
-using MBF_Launcher.Services;
 using System.Diagnostics;
 
 namespace MBF_Launcher
@@ -10,8 +9,6 @@ namespace MBF_Launcher
         /// The ADB flow object
         /// </summary>
         private static readonly AdbFlow Flow = new AdbFlow();
-
-        private readonly BridgeService Bridge = BridgeService.Instance;
 
         /// <summary>
         /// Number of times the fish has been tapped
@@ -43,44 +40,15 @@ namespace MBF_Launcher
 
             BindingContext = this;
             Flow.OnMessage += this.Flow_OnMessage;
-            Bridge.BridgeExited += this.BridgeExited;
         }
 
         /// <summary>
-        /// Removes the event handler when the page is destroyed
-        /// </summary>
-        ~MainPage()
-        {
-            //Flow.OnMessage -= this.Flow_OnMessage;
-            //Bridge.BridgeExited -= this.BridgeExited;
-        }
-
-        /// <summary>
-        /// Launches the bridge process
+        /// Opens the browser page with the configured app URL and the C# ADB bridge.
         /// </summary>
         /// <returns></returns>
         public async Task LaunchMbf()
         {
-            try
-            {
-                if (!Bridge.IsRunning)
-                {
-                    await Bridge.Start(new BridgeService.BridgeStartInfo()
-                    {
-                        BinaryPath = Path.Combine(SharedData.NativeLibraryDir, "libMbfBridge.so"),
-                        AppUrl = AppConfig.AppUrl,
-                        AdbPort = AdbServer.AdbPort
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                MainThread.BeginInvokeOnMainThread(() => _ = DisplayAlert(AppResources.ErrorStartingBridge, ex.Message, AppResources.AlertDismiss));
-                return;
-            }
-
-            var startInfo = BridgeService.Instance.StartupInfo!;
-            var address = startInfo.BrowserUrl.ToString();
+            var address = AppConfig.AppUrl;
 
             if (mbfDevMode.IsChecked)
             {
@@ -96,7 +64,7 @@ namespace MBF_Launcher
                 }
             }
 
-            MainThread.BeginInvokeOnMainThread(() => _ = Navigation.PushAsync(new BrowserPage(address)));
+            MainThread.BeginInvokeOnMainThread(() => _ = Navigation.PushAsync(new BrowserPage(address, AdbServer.AdbPort)));
         }
 
         /// <summary>
@@ -294,17 +262,6 @@ namespace MBF_Launcher
         });
 
         #region Event Handlers
-        /// <summary>
-        /// Called when the bridge process has exited.  This is probably due to an error.
-        /// </summary>
-        /// <param name="process"></param>
-        /// <param name="e"></param>
-        private void BridgeExited(Process process, EventArgs e) => _ = Task.Run(async () =>
-        {
-            await DisplayAlert(AppResources.BridgeProcessTerminated, process.StandardError.ReadToEnd(), AppResources.AlertDismiss);
-            await Helpers.RestartApp();
-        });
-
         /// <summary>
         /// Called when the page is loaded
         /// </summary>
