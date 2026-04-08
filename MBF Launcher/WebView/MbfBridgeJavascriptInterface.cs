@@ -1,15 +1,18 @@
 using Android.Webkit;
 using Java.Interop;
 using System.Collections.Concurrent;
-using System.Net.Sockets;
 
 namespace MBF_Launcher.WebView
 {
     /// <summary>
-    /// Android <c>JavascriptInterface</c> that exposes raw ADB TCP connections to the
+    /// Android <c>JavascriptInterface</c> that exposes ADB connections to the
     /// WebView page.  It is registered as <c>window.__mbfBridgeNative</c> and is
     /// consumed by <c>bridge.js</c>, which presents the higher-level
     /// <c>window.__mbfBridge</c> API to the page.
+    ///
+    /// The actual socket transport is provided by an <see cref="IAdbSocketFactory"/>,
+    /// allowing both real TCP connections (via <see cref="TcpAdbSocketFactory"/>) and
+    /// virtual/simulated connections to be used interchangeably.
     ///
     /// Flow control
     /// ------------
@@ -28,13 +31,13 @@ namespace MBF_Launcher.WebView
         private const int ReadBufferSize = 8192;
 
         private readonly Microsoft.Maui.Controls.WebView _webView;
-        private readonly int _adbPort;
+        private readonly IAdbSocketFactory _socketFactory;
         private readonly ConcurrentDictionary<string, Connection> _connections = new();
 
-        public MbfBridgeJavascriptInterface(Microsoft.Maui.Controls.WebView webView, int adbPort)
+        public MbfBridgeJavascriptInterface(Microsoft.Maui.Controls.WebView webView, IAdbSocketFactory socketFactory)
         {
             _webView = webView;
-            _adbPort = adbPort;
+            _socketFactory = socketFactory;
         }
 
         // ------------------------------------------------------------------
@@ -56,9 +59,8 @@ namespace MBF_Launcher.WebView
                 var id = Guid.NewGuid().ToString();
                 try
                 {
-                    var tcp = new TcpClient();
-                    await tcp.ConnectAsync("127.0.0.1", _adbPort);
-                    var conn = new Connection(id, tcp);
+                    var socket = await _socketFactory.ConnectAsync();
+                    var conn = new Connection(id, socket);
                     _connections[id] = conn;
                     await Dispatch($"window.__mbfBridgeDispatch('connected',{J(callbackId)},{J(id)})");
                     _ = ReadLoop(conn);
@@ -158,7 +160,7 @@ namespace MBF_Launcher.WebView
         {
             if (_connections.TryRemove(id, out var conn))
             {
-                conn.TcpClient.Close();
+                conn.Socket.Close();
                 await Dispatch($"window.__mbfBridgeDispatch('closed',{J(id)})");
             }
         }
