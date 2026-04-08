@@ -91,8 +91,9 @@ namespace MBF_Launcher.WebView
                     await conn.Stream.WriteAsync(bytes);
                     await Dispatch($"window.__mbfBridgeDispatch('write_result',{J(callbackId)},true)");
                 }
-                catch
+                catch (Exception ex)
                 {
+                    System.Diagnostics.Debug.WriteLine($"[MbfBridge] WriteAdb error on {connectionId}: {ex.Message}");
                     await Dispatch($"window.__mbfBridgeDispatch('write_result',{J(callbackId)},false)");
                     await RemoveAndClose(connectionId);
                 }
@@ -143,9 +144,9 @@ namespace MBF_Launcher.WebView
                     await Dispatch($"window.__mbfBridgeDispatch('data',{J(conn.Id)},{J(b64)})");
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Stream was closed or an error occurred.
+                System.Diagnostics.Debug.WriteLine($"[MbfBridge] ReadLoop error on {conn.Id}: {ex.Message}");
             }
             finally
             {
