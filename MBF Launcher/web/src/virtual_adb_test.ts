@@ -25,7 +25,7 @@ function assert(condition: boolean, label: string): void {
 // ── Test constants ────────────────────────────────────────────────────────────
 
 const TEST_FILE    = `/data/local/tmp/mbf_virtual_test_${Date.now()}.txt`;
-const TEST_CONTENT = "Hello from MBF Virtual Device! \uD83C\uDFAE\n";
+const TEST_CONTENT = "Hello from MBF Virtual Device! 🎮\n";
 
 // ── Test suite ────────────────────────────────────────────────────────────────
 

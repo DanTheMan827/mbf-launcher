@@ -42,6 +42,15 @@ namespace MBF_Launcher.WebView
         private const string Features = "cmd,fixed_push_mkdir";
 
         /// <summary>
+        /// Fallback value for <c>ro.build.version.release</c> when
+        /// <c>Android.OS.Build.VERSION.Release</c> is unexpectedly null.
+        /// </summary>
+        private const string DefaultAndroidRelease = "14";
+
+        // Known 64-bit ABI prefixes as defined by the Android NDK.
+        private static readonly string[] Abi64Prefixes = ["arm64", "x86_64", "riscv64", "mips64"];
+
+        /// <summary>
         /// Primary ABI of the device running the app (e.g. <c>arm64-v8a</c>).
         /// Used as the <c>device:</c> field in <c>host:devices-l</c> so that
         /// clients see the correct architecture.
@@ -328,9 +337,9 @@ namespace MBF_Launcher.WebView
         /// </summary>
         private static string? GetSimulatedProp(string key)
         {
-            var abis       = Android.OS.Build.SupportedAbis ?? ["arm64-v8a"];
-            var abis64     = abis.Where(a =>  a.Contains("64")).ToArray();
-            var abis32     = abis.Where(a => !a.Contains("64")).ToArray();
+            var abis   = Android.OS.Build.SupportedAbis ?? ["arm64-v8a"];
+            var abis64 = abis.Where(Is64BitAbi).ToArray();
+            var abis32 = abis.Where(a => !Is64BitAbi(a)).ToArray();
 
             return key switch
             {
@@ -344,11 +353,17 @@ namespace MBF_Launcher.WebView
                 "ro.hardware"                => Android.OS.Build.Hardware         ?? "unknown",
                 "ro.build.id"                => Android.OS.Build.Id               ?? "unknown",
                 "ro.build.version.sdk"       => ((int)Android.OS.Build.VERSION.SdkInt).ToString(),
-                "ro.build.version.release"   => Android.OS.Build.VERSION.Release  ?? "14",
+                "ro.build.version.release"   => Android.OS.Build.VERSION.Release  ?? DefaultAndroidRelease,
                 ""                           => BuildAllSimulatedProps(abis, abis64, abis32),
                 _                            => null,
             };
         }
+
+        /// <summary>
+        /// Returns <c>true</c> for well-known 64-bit ABI names as defined by the Android NDK.
+        /// </summary>
+        private static bool Is64BitAbi(string abi) =>
+            Array.Exists(Abi64Prefixes, prefix => abi.StartsWith(prefix, StringComparison.Ordinal));
 
         private static string BuildAllSimulatedProps(
             string[] abis, string[] abis64, string[] abis32)
@@ -365,7 +380,7 @@ namespace MBF_Launcher.WebView
                 ("ro.hardware",              Android.OS.Build.Hardware),
                 ("ro.build.id",              Android.OS.Build.Id),
                 ("ro.build.version.sdk",     ((int)Android.OS.Build.VERSION.SdkInt).ToString()),
-                ("ro.build.version.release", Android.OS.Build.VERSION.Release),
+                ("ro.build.version.release", Android.OS.Build.VERSION.Release ?? DefaultAndroidRelease),
             };
             var sb = new StringBuilder();
             foreach (var (k, v) in props)
