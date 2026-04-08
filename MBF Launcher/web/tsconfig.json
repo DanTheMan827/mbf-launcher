@@ -5,7 +5,8 @@
     "outDir": "../Resources/Raw",
     "strict": true,
     "lib": ["ES2019", "DOM"],
-    "removeComments": false
+    "removeComments": false,
+    "types": []
   },
-  "include": ["src"]
+  "include": ["src/bridge.ts", "src/bridge_test.ts", "src/mbf-bridge.d.ts"]
 }

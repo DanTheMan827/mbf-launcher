@@ -154,6 +154,8 @@
 		      Command="npm ci --prefer-offline" />
 		<Exec WorkingDirectory="$(MSBuildProjectDirectory)/web"
 		      Command="npx tsc" />
+		<Exec WorkingDirectory="$(MSBuildProjectDirectory)/web"
+		      Command="npx vite build" />
 	</Target>
 
 </Project>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MBF Virtual ADB Test</title>
+    <style>
+        body    { font-family: monospace; padding: 16px; background: #1a1a1a; color: #e0e0e0; margin: 0; }
+        h1      { color: #4fc3f7; margin: 0 0 12px; font-size: 1.2em; }
+        button  { padding: 8px 20px; background: #0288d1; color: #fff;
+                  border: none; border-radius: 4px; font-size: 14px; cursor: pointer; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #log    { margin-top: 12px; line-height: 1.8; white-space: pre-wrap; font-size: 13px; }
+        .pass   { color: #69f0ae; }
+        .fail   { color: #ff5252; }
+        .section{ color: #ffd740; margin-top: 6px; font-weight: bold; }
+        .info   { color: #b0bec5; }
+    </style>
+    <script src="bridge.js" defer></script>
+    <script src="virtual_adb_test.js" defer></script>
+</head>
+<body>
+    <h1>MBF Virtual ADB Test</h1>
+    <button id="run">Run Tests</button>
+    <div id="log"></div>
+</body>
+</html>

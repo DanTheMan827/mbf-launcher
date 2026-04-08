@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Text;
@@ -39,6 +40,14 @@ namespace MBF_Launcher.WebView
         /// corresponding protocol variants need to be implemented.
         /// </summary>
         private const string Features = "cmd,fixed_push_mkdir";
+
+        /// <summary>
+        /// Primary ABI of the device running the app (e.g. <c>arm64-v8a</c>).
+        /// Used as the <c>device:</c> field in <c>host:devices-l</c> so that
+        /// clients see the correct architecture.
+        /// </summary>
+        private static string DeviceAbi =>
+            Android.OS.Build.SupportedAbis?.FirstOrDefault() ?? "arm64-v8a";
 
         // ── Disconnect signal ─────────────────────────────────────────────────
 
@@ -135,12 +144,13 @@ namespace MBF_Launcher.WebView
                 var line = $"{DeviceSerial} device " +
                            $"product:{DeviceProduct} " +
                            $"model:{DeviceModel} " +
-                           $"device:virtual transport_id:1\n";
+                           $"device:{DeviceAbi} transport_id:1\n";
                 await WriteOkayDataAsync(stream, line);
                 return;
             }
 
             if (service == "host:features" ||
+                service == "host:host-features" ||
                 service == $"host-serial:{DeviceSerial}:features" ||
                 service == "host-transport:any:features")
             {
@@ -179,9 +189,26 @@ namespace MBF_Launcher.WebView
 
             // ── Transport switch ─────────────────────────────────────────────
 
+            // "tport" variants: send OKAY + 8-byte little-endian transport ID,
+            // then read and dispatch the next service on the same connection.
+            if (service == "host:tport:any" ||
+                service == $"host:tport:serial:{DeviceSerial}")
+            {
+                await WriteOkayAsync(stream);
+                var transportIdBytes = new byte[8];
+                BinaryPrimitives.WriteUInt64LittleEndian(transportIdBytes, 1);
+                await stream.WriteAsync(transportIdBytes);
+                var next = await ReadServiceAsync(stream);
+                if (next is not null)
+                    await DispatchDeviceServiceAsync(stream, next);
+                return;
+            }
+
+            // Classic and transport-id variants: send OKAY only (no 8-byte ID).
             if (service == "host:transport-any"  ||
                 service == "host:transport-local" ||
-                service == $"host:transport:{DeviceSerial}")
+                service == $"host:transport:{DeviceSerial}" ||
+                service.StartsWith("host:transport-id:"))
             {
                 await WriteOkayAsync(stream);
                 var next = await ReadServiceAsync(stream);
@@ -204,6 +231,24 @@ namespace MBF_Launcher.WebView
                 return;
             }
 
+            // exec:getprop — try the real binary; fall back to Build-derived values.
+            if (service == "exec:getprop" || service.StartsWith("exec:getprop "))
+            {
+                var key = service.Length > 13 ? service[13..].Trim() : string.Empty;
+                await WriteOkayAsync(stream);
+                await RunGetpropAsync(stream, key);
+                return;
+            }
+
+            // exec: — PTY-less command execution (same impl as legacy shell here).
+            if (service == "exec:" || service.StartsWith("exec:"))
+            {
+                var cmd = service.Length > 5 ? service[5..] : string.Empty;
+                await WriteOkayAsync(stream);
+                await RunShellAsync(stream, cmd);
+                return;
+            }
+
             // Legacy shell: "shell:{cmd}" or "shell:" (interactive)
             if (service == "shell:" || service.StartsWith("shell:"))
             {
@@ -222,6 +267,111 @@ namespace MBF_Launcher.WebView
             }
 
             await WriteFailAsync(stream, $"unknown service: {service}");
+        }
+
+        // ── getprop with fallback ──────────────────────────────────────────────
+
+        /// <summary>
+        /// Tries <c>/system/bin/getprop</c> first.  On any failure (SELinux
+        /// denial, missing binary, empty output, non-zero exit) falls back to
+        /// values derived from <c>Android.OS.Build</c>.
+        /// </summary>
+        private static async Task RunGetpropAsync(Stream stream, string key)
+        {
+            // 1. Try the real binary.
+            if (await TryRunRealGetpropAsync(stream, key))
+                return;
+
+            // 2. Fall back to simulated values.
+            var value = GetSimulatedProp(key);
+            if (value is not null)
+                await stream.WriteAsync(Encoding.UTF8.GetBytes(value + "\n"));
+            // Unknown key → write nothing (matches real getprop behaviour).
+        }
+
+        private static async Task<bool> TryRunRealGetpropAsync(Stream stream, string key)
+        {
+            try
+            {
+                using var proc = new Process();
+                proc.StartInfo = new ProcessStartInfo
+                {
+                    FileName               = "/system/bin/getprop",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError  = true,
+                    UseShellExecute        = false,
+                };
+                if (!string.IsNullOrEmpty(key))
+                    proc.StartInfo.ArgumentList.Add(key);
+
+                proc.Start();
+                var output = await proc.StandardOutput.ReadToEndAsync();
+                await proc.WaitForExitAsync();
+
+                if (proc.ExitCode == 0 && !string.IsNullOrWhiteSpace(output))
+                {
+                    await stream.WriteAsync(Encoding.UTF8.GetBytes(output));
+                    return true;
+                }
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Returns a simulated <c>getprop</c> value for <paramref name="key"/>,
+        /// or <c>null</c> if the key is not known.  An empty key returns all
+        /// known properties in <c>[key]: [value]</c> format.
+        /// </summary>
+        private static string? GetSimulatedProp(string key)
+        {
+            var abis       = Android.OS.Build.SupportedAbis ?? ["arm64-v8a"];
+            var abis64     = abis.Where(a =>  a.Contains("64")).ToArray();
+            var abis32     = abis.Where(a => !a.Contains("64")).ToArray();
+
+            return key switch
+            {
+                "ro.product.cpu.abi"         => abis.FirstOrDefault() ?? "arm64-v8a",
+                "ro.product.cpu.abilist"     => string.Join(",", abis),
+                "ro.product.cpu.abilist64"   => string.Join(",", abis64),
+                "ro.product.cpu.abilist32"   => string.Join(",", abis32),
+                "ro.product.model"           => Android.OS.Build.Model            ?? DeviceModel,
+                "ro.product.name"            => Android.OS.Build.Product          ?? DeviceProduct,
+                "ro.product.manufacturer"    => Android.OS.Build.Manufacturer     ?? "unknown",
+                "ro.hardware"                => Android.OS.Build.Hardware         ?? "unknown",
+                "ro.build.id"                => Android.OS.Build.Id               ?? "unknown",
+                "ro.build.version.sdk"       => ((int)Android.OS.Build.VERSION.SdkInt).ToString(),
+                "ro.build.version.release"   => Android.OS.Build.VERSION.Release  ?? "14",
+                ""                           => BuildAllSimulatedProps(abis, abis64, abis32),
+                _                            => null,
+            };
+        }
+
+        private static string BuildAllSimulatedProps(
+            string[] abis, string[] abis64, string[] abis32)
+        {
+            var props = new (string Key, string? Value)[]
+            {
+                ("ro.product.cpu.abi",       abis.FirstOrDefault()),
+                ("ro.product.cpu.abilist",   string.Join(",", abis)),
+                ("ro.product.cpu.abilist64", string.Join(",", abis64)),
+                ("ro.product.cpu.abilist32", string.Join(",", abis32)),
+                ("ro.product.model",         Android.OS.Build.Model),
+                ("ro.product.name",          Android.OS.Build.Product),
+                ("ro.product.manufacturer",  Android.OS.Build.Manufacturer),
+                ("ro.hardware",              Android.OS.Build.Hardware),
+                ("ro.build.id",              Android.OS.Build.Id),
+                ("ro.build.version.sdk",     ((int)Android.OS.Build.VERSION.SdkInt).ToString()),
+                ("ro.build.version.release", Android.OS.Build.VERSION.Release),
+            };
+            var sb = new StringBuilder();
+            foreach (var (k, v) in props)
+                if (v is not null)
+                    sb.AppendLine($"[{k}]: [{v}]");
+            return sb.ToString();
         }
 
         // ── Shell execution ────────────────────────────────────────────────────

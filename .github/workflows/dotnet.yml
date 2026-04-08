@@ -51,6 +51,13 @@ jobs:
       run: |
         echo -n "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > myapp.keystore
 
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: 'MBF Launcher/web/package-lock.json'
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
       with:
