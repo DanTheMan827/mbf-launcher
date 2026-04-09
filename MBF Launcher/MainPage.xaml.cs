@@ -66,7 +66,9 @@ namespace MBF_Launcher
             }
 
             MainThread.BeginInvokeOnMainThread(() => _ = Navigation.PushAsync(
-                new BrowserPage(address, new TcpAdbSocketFactory("127.0.0.1", AdbServer.AdbPort))));
+                new BrowserPage(address, App.IsPrimaryUser()
+                    ? new TcpAdbSocketFactory("127.0.0.1", AdbServer.AdbPort)
+                    : new VirtualAdbServer())));
         }
 
         /// <summary>
@@ -269,7 +271,20 @@ namespace MBF_Launcher
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void ContentPage_Loaded(object sender, EventArgs e) => Flow.SendState();
+        private void ContentPage_Loaded(object sender, EventArgs e)
+        {
+            if (App.IsPrimaryUser())
+            {
+                Flow.SendState();
+            }
+            else
+            {
+                // Non-primary users can't use the real ADB stack; skip the setup
+                // flow and show the connected layout directly so they can still
+                // configure the game and launch MBF with the virtual ADB server.
+                _ = ShowOneLayout(Layouts.Connected);
+            }
+        }
 
         /// <summary>
         /// Called when the restart adb button is clicked

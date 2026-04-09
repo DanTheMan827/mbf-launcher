@@ -1,6 +1,5 @@
 ﻿using DanTheMan827.OnDeviceADB;
 using MBF_Launcher.Services;
-using MBF_Launcher.WebView;
 using Window = Microsoft.Maui.Controls.Window;
 
 namespace MBF_Launcher
@@ -17,14 +16,6 @@ namespace MBF_Launcher
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            // Non-primary Android users cannot use the real ADB stack; route them
-            // directly to the browser backed by the in-process virtual ADB server.
-            if (!IsPrimaryUser())
-            {
-                return new Window(new NavigationPage(
-                    new BrowserPage(AppConfig.AppUrl, new VirtualAdbServer())));
-            }
-
             return new Window(new NavigationPage(new MainPage()));
         }
 
@@ -126,7 +117,7 @@ namespace MBF_Launcher
         /// Returns <c>true</c> when the app is running as the primary Android user
         /// (user ID 0).  Secondary users lack access to the real ADB stack.
         /// </summary>
-        private static bool IsPrimaryUser()
+        internal static bool IsPrimaryUser()
         {
 #if ANDROID
             // Android assigns UIDs in the range [userId * 100000, (userId+1) * 100000).
