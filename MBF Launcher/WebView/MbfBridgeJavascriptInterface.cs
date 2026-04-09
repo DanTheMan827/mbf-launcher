@@ -23,6 +23,15 @@ namespace MBF_Launcher.WebView
     /// <see cref="AckAdb"/>, which bridge.js does automatically once the
     /// <c>onData</c> callback settles.  Slow callbacks therefore stall the read
     /// loop, creating natural back-pressure.
+    ///
+    /// Dispatch path
+    /// -------------
+    /// Events are delivered to JS via <see cref="Android.Webkit.WebView.EvaluateJavascript"/>
+    /// posted directly onto the WebView's Looper with <see cref="Android.Views.View.Post"/>,
+    /// bypassing the extra MAUI main-thread marshal for lower latency.  Writes
+    /// (<see cref="WriteAdb"/>) are handled synchronously and return their result
+    /// directly to the JS caller, eliminating a full <c>evaluateJavascript</c>
+    /// round-trip per write.
     /// </summary>
     [Android.Runtime.Preserve(AllMembers = true)]
     internal sealed class MbfBridgeJavascriptInterface : Java.Lang.Object
@@ -30,13 +39,13 @@ namespace MBF_Launcher.WebView
         private const int FlowWindow = 8;
         private const int ReadBufferSize = 64 * 1024;
 
-        private readonly Microsoft.Maui.Controls.WebView _webView;
+        private readonly Android.Webkit.WebView _nativeWebView;
         private readonly IAdbSocketFactory _socketFactory;
         private readonly ConcurrentDictionary<string, Connection> _connections = new();
 
-        public MbfBridgeJavascriptInterface(Microsoft.Maui.Controls.WebView webView, IAdbSocketFactory socketFactory)
+        public MbfBridgeJavascriptInterface(Android.Webkit.WebView nativeWebView, IAdbSocketFactory socketFactory)
         {
-            _webView = webView;
+            _nativeWebView = nativeWebView;
             _socketFactory = socketFactory;
         }
 
@@ -62,44 +71,40 @@ namespace MBF_Launcher.WebView
                     var socket = await _socketFactory.ConnectAsync();
                     var conn = new Connection(id, socket);
                     _connections[id] = conn;
-                    await Dispatch($"window.__mbfBridgeDispatch('connected',{J(callbackId)},{J(id)})");
+                    DispatchFire($"window.__mbfBridgeDispatch('connected',{J(callbackId)},{J(id)})");
                     _ = ReadLoop(conn);
                 }
                 catch (Exception ex)
                 {
-                    await Dispatch($"window.__mbfBridgeDispatch('error',{J(callbackId)},{J(ex.Message)})");
+                    DispatchFire($"window.__mbfBridgeDispatch('error',{J(callbackId)},{J(ex.Message)})");
                 }
             });
         }
 
         /// <summary>
-        /// Writes base64-encoded bytes to an existing connection.
-        /// Resolves with <c>('write_result', callbackId, true|false)</c>.
+        /// Writes base64-encoded bytes to an existing connection and returns
+        /// <c>"true"</c> on success or <c>"false"</c> on failure synchronously
+        /// to the JS caller.  No <c>write_result</c> dispatch event is emitted,
+        /// eliminating a full <c>evaluateJavascript</c> round-trip per write.
         /// </summary>
         [JavascriptInterface]
         [Export("writeAdb")]
-        public void WriteAdb(string connectionId, string base64Data, string callbackId)
+        public string WriteAdb(string connectionId, string base64Data)
         {
-            _ = Task.Run(async () =>
+            if (!_connections.TryGetValue(connectionId, out var conn))
+                return "false";
+            try
             {
-                if (!_connections.TryGetValue(connectionId, out var conn))
-                {
-                    await Dispatch($"window.__mbfBridgeDispatch('write_result',{J(callbackId)},false)");
-                    return;
-                }
-                try
-                {
-                    var bytes = Convert.FromBase64String(base64Data);
-                    await conn.Stream.WriteAsync(bytes);
-                    await Dispatch($"window.__mbfBridgeDispatch('write_result',{J(callbackId)},true)");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[MbfBridge] WriteAdb error on {connectionId}: {ex.Message}");
-                    await Dispatch($"window.__mbfBridgeDispatch('write_result',{J(callbackId)},false)");
-                    await RemoveAndClose(connectionId);
-                }
-            });
+                var bytes = Convert.FromBase64String(base64Data);
+                conn.Stream.WriteAsync(bytes).GetAwaiter().GetResult();
+                return "true";
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MbfBridge] WriteAdb error on {connectionId}: {ex.Message}");
+                _ = Task.Run(() => RemoveAndClose(connectionId));
+                return "false";
+            }
         }
 
         /// <summary>
@@ -148,7 +153,11 @@ namespace MBF_Launcher.WebView
                     if (n == 0) break;
 
                     var b64 = Convert.ToBase64String(buf, 0, n);
-                    await Dispatch($"window.__mbfBridgeDispatch('data',{J(conn.Id)},{J(b64)})");
+                    // Fire-and-forget: post directly onto the WebView Looper
+                    // without the extra MAUI main-thread marshal.  Flow control
+                    // (back-pressure) is handled independently through the
+                    // semaphore + ackAdb mechanism, so no await is needed here.
+                    DispatchFire($"window.__mbfBridgeDispatch('data',{J(conn.Id)},{J(b64)})");
                 }
             }
             catch (OperationCanceledException)
@@ -165,7 +174,7 @@ namespace MBF_Launcher.WebView
             }
         }
 
-        private async Task RemoveAndClose(string id)
+        private Task RemoveAndClose(string id)
         {
             if (_connections.TryRemove(id, out var conn))
             {
@@ -173,13 +182,22 @@ namespace MBF_Launcher.WebView
                 // unblocks immediately instead of waiting for JS to ack.
                 conn.Cts.Cancel();
                 conn.Socket.Close();
-                await Dispatch($"window.__mbfBridgeDispatch('closed',{J(id)})");
+                DispatchFire($"window.__mbfBridgeDispatch('closed',{J(id)})");
             }
+            return Task.CompletedTask;
         }
 
-        /// <summary>Evaluates <paramref name="script"/> in the WebView on the main thread.</summary>
-        private Task Dispatch(string script) =>
-            MainThread.InvokeOnMainThreadAsync(() => _webView.EvaluateJavaScriptAsync(script));
+        /// <summary>
+        /// Posts <paramref name="script"/> directly onto the WebView's Looper
+        /// for evaluation.  This avoids the extra round-trip through MAUI's
+        /// <c>MainThread.InvokeOnMainThreadAsync</c> for lower latency.
+        /// The call is fire-and-forget; no result is captured.
+        /// </summary>
+        private void DispatchFire(string script)
+        {
+            var nw = _nativeWebView;
+            nw.Post(() => nw.EvaluateJavascript(script, null));
+        }
 
         /// <summary>Serialises <paramref name="s"/> as a JSON string literal.</summary>
         private static string J(string s) =>

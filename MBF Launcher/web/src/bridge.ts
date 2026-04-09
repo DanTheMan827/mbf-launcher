@@ -48,8 +48,16 @@
 
     function bytesToB64(data: Uint8Array | ArrayBuffer): string {
         const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
+        // Process in 64 KB chunks to avoid call-stack overflows with large buffers
+        // while still being significantly faster than per-character concatenation.
+        const CHUNK = 65536;
         let binary = "";
-        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        for (let i = 0; i < bytes.length; i += CHUNK) {
+            binary += String.fromCharCode.apply(
+                null,
+                bytes.subarray(i, Math.min(i + CHUNK, bytes.length)) as unknown as number[]
+            );
+        }
         return btoa(binary);
     }
 
@@ -94,13 +102,6 @@
                 }
                 break;
             }
-            case "write_result": {
-                const [callbackId, success] = args as [string, boolean];
-                const cb = pending.get(callbackId);
-                pending.delete(callbackId);
-                cb?.resolve(success);
-                break;
-            }
         }
     };
 
@@ -122,11 +123,10 @@
 
             write(data: Uint8Array | ArrayBuffer): Promise<boolean> {
                 const b64 = bytesToB64(data);
-                const callbackId = crypto.randomUUID();
-                return new Promise<boolean>((resolve, reject) => {
-                    pending.set(callbackId, { resolve: resolve as Callback<unknown>["resolve"], reject });
-                    window.__mbfBridgeNative!.writeAdb(connectionId, b64, callbackId);
-                });
+                // writeAdb is synchronous on the native side and returns "true"/"false"
+                // directly, eliminating a full evaluateJavascript round-trip per write.
+                const result = window.__mbfBridgeNative!.writeAdb(connectionId, b64);
+                return Promise.resolve(result === "true");
             },
 
             onData(callback: (data: Uint8Array) => void | Promise<void>): () => void {

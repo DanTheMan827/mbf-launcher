@@ -43,8 +43,35 @@ public partial class BrowserPage : ContentPage
             if (_socketFactory is not null)
             {
                 browser.AddJavascriptInterface(
-                    new MbfBridgeJavascriptInterface(webView, _socketFactory),
+                    new MbfBridgeJavascriptInterface(browser, _socketFactory),
                     "__mbfBridgeNative");
+
+                // Eagerly load bridge.js so we can register it as a document-start
+                // script, guaranteeing that window.__mbfBridge is defined before
+                // any page JavaScript runs (fixes the race where pages could call
+                // __mbfBridge before the post-navigation injection had completed).
+                try
+                {
+                    if (_bridgeScript == null)
+                    {
+                        var assetManager = Android.App.Application.Context.Assets!;
+                        using var stream = assetManager.Open("bridge.js");
+                        using var reader = new StreamReader(stream);
+                        _bridgeScript = reader.ReadToEnd();
+                    }
+
+                    if (Android.Webkit.WebViewCompat.IsFeatureSupported(
+                            Android.Webkit.WebViewFeature.DocumentStartScript))
+                    {
+                        Android.Webkit.WebViewCompat.AddDocumentStartJavaScript(
+                            browser, _bridgeScript, new System.Collections.Generic.List<string> { "*" });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine(
+                        $"[BrowserPage] AddDocumentStartJavaScript failed: {ex.Message}");
+                }
             }
         }
     }
@@ -69,9 +96,9 @@ public partial class BrowserPage : ContentPage
     }
 
     /// <summary>
-    /// Injects bridge.js after every successful navigation so that
-    /// <c>window.__mbfBridge</c> is available even on pages that do not bundle
-    /// it themselves.  The script is idempotent and safe to run multiple times.
+    /// Injects bridge.js after every successful navigation as a fallback for
+    /// WebKit versions that do not support <c>AddDocumentStartJavaScript</c>.
+    /// The script is idempotent and safe to run multiple times.
     /// </summary>
     private async void WebView_Navigated(object? sender, WebNavigatedEventArgs e)
     {

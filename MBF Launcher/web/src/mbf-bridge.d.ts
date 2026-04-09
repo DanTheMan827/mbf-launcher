@@ -81,8 +81,12 @@ interface MbfBridge {
 interface MbfBridgeNative {
     /** Initiates a TCP connection to the ADB server; result arrives via `__mbfBridgeDispatch`. */
     connectAdb(callbackId: string): void;
-    /** Writes base64-encoded bytes; result arrives via `__mbfBridgeDispatch`. */
-    writeAdb(connectionId: string, base64Data: string, callbackId: string): void;
+    /**
+     * Writes base64-encoded bytes synchronously.
+     * Returns `"true"` on success, `"false"` on failure.
+     * No `write_result` dispatch event is emitted.
+     */
+    writeAdb(connectionId: string, base64Data: string): string;
     /** Releases one flow-control permit for the given connection. */
     ackAdb(connectionId: string): void;
     /** Closes the connection for the given ID. */
