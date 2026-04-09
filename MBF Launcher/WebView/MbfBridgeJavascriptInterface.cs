@@ -28,7 +28,7 @@ namespace MBF_Launcher.WebView
     internal sealed class MbfBridgeJavascriptInterface : Java.Lang.Object
     {
         private const int FlowWindow = 8;
-        private const int ReadBufferSize = 1 * 1024 * 1024;
+        private const int ReadBufferSize = 64 * 1024;
 
         private readonly Microsoft.Maui.Controls.WebView _webView;
         private readonly IAdbSocketFactory _socketFactory;
