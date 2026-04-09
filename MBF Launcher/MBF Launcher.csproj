@@ -126,6 +126,7 @@
 		<Compile Include="..\OnDeviceADB\AdbWifiState.cs" Link="OnDeviceADB\AdbWifiState.cs" />
 		<Compile Include="..\OnDeviceADB\AdbWrapper.cs" Link="OnDeviceADB\AdbWrapper.cs" />
 		<Compile Include="..\OnDeviceADB\ExitInfo.cs" Link="OnDeviceADB\ExitInfo.cs" />
+		<Compile Include="..\OnDeviceADB\SharedData.cs" Link="OnDeviceADB\SharedData.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -148,14 +149,10 @@
 	</ItemGroup>
 
 	<!-- Compile the bridge TypeScript sources before the Android build. -->
-	<Target Name="CompileWebAssets" BeforeTargets="BeforeBuild"
-	        Condition="Exists('$(MSBuildProjectDirectory)/web/package.json')">
-		<Exec WorkingDirectory="$(MSBuildProjectDirectory)/web"
-		      Command="npm ci --prefer-offline" />
-		<Exec WorkingDirectory="$(MSBuildProjectDirectory)/web"
-		      Command="npx tsc" />
-		<Exec WorkingDirectory="$(MSBuildProjectDirectory)/web"
-		      Command="npx vite build" />
+	<Target Name="CompileWebAssets" BeforeTargets="BeforeBuild" Condition="Exists('$(MSBuildProjectDirectory)/web/package.json')">
+		<Exec WorkingDirectory="$(MSBuildProjectDirectory)/web" Command="npm ci --prefer-offline" />
+		<Exec WorkingDirectory="$(MSBuildProjectDirectory)/web" Command="npx tsc" />
+		<Exec WorkingDirectory="$(MSBuildProjectDirectory)/web" Command="npx vite build" />
 	</Target>
 
 </Project>

@@ -1,5 +1,4 @@
 ﻿using DanTheMan827.OnDeviceADB;
-using MBF_Launcher;
 
 internal static partial class Helpers
 {
@@ -9,6 +8,6 @@ internal static partial class Helpers
     /// <returns></returns>
     public static async Task RestartApp()
     {
-        await AdbWrapper.RunAdbCommandAsync("shell", $"sh -c '{SharedData.AppRestartCommand}' > /dev/null 2>&1 < /dev/null &");
+        await AdbWrapper.RunAdbCommandAsync("shell", $"sh -c '{DanTheMan827.OnDeviceADB.SharedData.AppRestartCommand}' > /dev/null 2>&1 < /dev/null &");
     }
 }

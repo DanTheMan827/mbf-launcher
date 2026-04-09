@@ -65,6 +65,17 @@ namespace MBF_Launcher
                 }
             }
 
+            var status = await Permissions.CheckStatusAsync<Permissions.StorageRead>();
+            if (!App.IsPrimaryUser() && status != PermissionStatus.Granted)
+            {
+                status = await Permissions.RequestAsync<Permissions.StorageWrite>();
+                if (status != PermissionStatus.Granted)
+                {
+                    await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert(AppResources.Error, "Storage permission is required to launch the browser with the ADB bridge enabled.", AppResources.AlertDismiss));
+                    return;
+                }
+            }
+
             MainThread.BeginInvokeOnMainThread(() => _ = Navigation.PushAsync(
                 new BrowserPage(address, App.IsPrimaryUser()
                     ? new TcpAdbSocketFactory("127.0.0.1", AdbServer.AdbPort)
