@@ -28,7 +28,7 @@ namespace MBF_Launcher.WebView
     internal sealed class MbfBridgeJavascriptInterface : Java.Lang.Object
     {
         private const int FlowWindow = 8;
-        private const int ReadBufferSize = 8192;
+        private const int ReadBufferSize = 1 * 1024 * 1024;
 
         private readonly Microsoft.Maui.Controls.WebView _webView;
         private readonly IAdbSocketFactory _socketFactory;
@@ -136,15 +136,24 @@ namespace MBF_Launcher.WebView
             {
                 while (true)
                 {
-                    var n = await conn.Stream.ReadAsync(buf);
-                    if (n == 0) break;
+                    // Acquire a flow-control permit BEFORE reading.
+                    // This blocks when JS has not yet acknowledged FlowWindow
+                    // chunks, propagating back-pressure to the ADB socket —
+                    // matching the Rust/Tauri acquire-then-read pattern.
+                    // The cancellation token unblocks this wait when the
+                    // connection is explicitly closed.
+                    await conn.Semaphore.WaitAsync(conn.CancellationToken);
 
-                    // Acquire a flow-control permit before dispatching.
-                    await conn.Semaphore.WaitAsync();
+                    var n = await conn.Stream.ReadAsync(buf, conn.CancellationToken);
+                    if (n == 0) break;
 
                     var b64 = Convert.ToBase64String(buf, 0, n);
                     await Dispatch($"window.__mbfBridgeDispatch('data',{J(conn.Id)},{J(b64)})");
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                // Connection was explicitly closed; exit the loop cleanly.
             }
             catch (Exception ex)
             {
@@ -160,6 +169,9 @@ namespace MBF_Launcher.WebView
         {
             if (_connections.TryRemove(id, out var conn))
             {
+                // Cancel the CancellationToken so WaitAsync in the read loop
+                // unblocks immediately instead of waiting for JS to ack.
+                conn.Cts.Cancel();
                 conn.Socket.Close();
                 await Dispatch($"window.__mbfBridgeDispatch('closed',{J(id)})");
             }
@@ -185,6 +197,18 @@ namespace MBF_Launcher.WebView
 
             /// <summary>Flow-control semaphore; starts full at <see cref="FlowWindow"/> permits.</summary>
             public SemaphoreSlim Semaphore { get; } = new(FlowWindow, FlowWindow);
+
+            /// <summary>
+            /// Cancellation source whose token is passed to both
+            /// <see cref="SemaphoreSlim.WaitAsync(CancellationToken)"/> and
+            /// <see cref="Stream.ReadAsync(byte[], int, int, CancellationToken)"/>
+            /// in the read loop.  Cancelled by <c>RemoveAndClose</c> so that an
+            /// explicit close unblocks the loop immediately.
+            /// </summary>
+            public CancellationTokenSource Cts { get; } = new();
+
+            /// <summary>The token from <see cref="Cts"/>.</summary>
+            public CancellationToken CancellationToken => Cts.Token;
 
             public Connection(string id, IAdbSocket socket)
             {
