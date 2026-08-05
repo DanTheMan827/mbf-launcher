@@ -4,7 +4,7 @@
     {
         public static string AppUrl
         {
-            get => Preferences.Default.Get(nameof(AppUrl), "https://dantheman827.github.io/ModsBeforeFriday/");
+            get => Preferences.Default.Get(nameof(AppUrl), "https://js-bridge-modsbeforefriday.dantheman827.workers.dev/?");
             set => Preferences.Default.Set(nameof(AppUrl), value);
         }
         public static string SelectedGame

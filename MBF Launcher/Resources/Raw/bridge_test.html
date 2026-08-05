@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MBF Bridge Test</title>
+    <style>
+        :root {
+            --bg:       #12172a;
+            --surface:  #1c2340;
+            --border:   #2e3660;
+            --accent:   #a8d8ea;
+            --pass:     #4caf50;
+            --fail:     #ef5350;
+            --data:     #ffd54f;
+            --heading:  #90caf9;
+            --text:     #dde3f0;
+            --muted:    #8899bb;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 16px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: "Roboto Mono", "Consolas", monospace;
+            font-size: 13px;
+        }
+
+        h1 {
+            font-size: 1.1em;
+            color: var(--accent);
+            margin: 0 0 12px;
+        }
+
+        .status {
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+        .status.ok    { background: #1b3a22; color: var(--pass); }
+        .status.error { background: #3a1b1b; color: var(--fail); }
+        .status.unknown { background: var(--surface); color: var(--muted); }
+
+        #run-btn {
+            background: var(--accent);
+            color: #0d1117;
+            border: none;
+            padding: 10px 24px;
+            font-size: 0.95em;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            letter-spacing: 0.03em;
+        }
+        #run-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        #run-btn:not(:disabled):hover { filter: brightness(1.1); }
+
+        #log {
+            margin-top: 14px;
+            max-height: 65vh;
+            overflow-y: auto;
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            line-height: 1.6;
+        }
+
+        .log-entry          { color: var(--text); }
+        .log-entry.log-pass { color: var(--pass); }
+        .log-entry.log-fail { color: var(--fail); }
+        .log-entry.log-data { color: var(--data); }
+        .log-entry.log-heading {
+            color: var(--heading);
+            font-weight: bold;
+            margin-top: 6px;
+        }
+    </style>
+
+    <!--
+        bridge.js is loaded first so that window.__mbfBridge is defined before
+        bridge_test.js runs.  Both are deferred so they execute after the DOM
+        is parsed, in order.
+    -->
+    <script src="bridge.js" defer></script>
+    <script src="bridge_test.js" defer></script>
+</head>
+<body>
+    <h1>MBF Bridge Test Page</h1>
+    <div id="bridge-status" class="status unknown">Checking bridge…</div>
+    <button id="run-btn">▶ Run Tests</button>
+    <div id="log"></div>
+</body>
+</html>

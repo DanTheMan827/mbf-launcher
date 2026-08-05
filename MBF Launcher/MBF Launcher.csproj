@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
     <TargetFramework>net9.0-android</TargetFramework>
@@ -18,14 +18,17 @@
 		<!-- App Identifier -->
 		<ApplicationId>com.dantheman827.mbflauncher</ApplicationId>
 
-		<!-- Versions -->
-		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+		<!-- Versions. CI overrides these for tagged and branch builds. -->
+		<Version>0.0.0-dev.0</Version>
+		<ApplicationDisplayVersion>0.0.0-dev.0</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>
 
     <!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
     <WindowsPackageType>None</WindowsPackageType>
 
-    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">29.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">28.0</SupportedOSPlatformVersion>
+    <AndroidCompileSdkVersion>28</AndroidCompileSdkVersion>
+    <AndroidTargetSdkVersion>28</AndroidTargetSdkVersion>
 
 		<PackageIcon>Resources/AppIcon/icon.png</PackageIcon>
 
@@ -48,7 +51,7 @@
 		</MauiIcon>
 	
 		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\splash.png" Color="#A7D6EA" BaseSize="128,128" />
+		<MauiSplashScreen Include="Resources\Splash\splash.png" Color="#07111F" BaseSize="128,128" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
@@ -126,6 +129,7 @@
 		<Compile Include="..\OnDeviceADB\AdbWifiState.cs" Link="OnDeviceADB\AdbWifiState.cs" />
 		<Compile Include="..\OnDeviceADB\AdbWrapper.cs" Link="OnDeviceADB\AdbWrapper.cs" />
 		<Compile Include="..\OnDeviceADB\ExitInfo.cs" Link="OnDeviceADB\ExitInfo.cs" />
+		<Compile Include="..\OnDeviceADB\SharedData.cs" Link="OnDeviceADB\SharedData.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -146,5 +150,12 @@
 			<LastGenOutput>AppResources.Designer.cs</LastGenOutput>
 		</EmbeddedResource>
 	</ItemGroup>
+
+	<!-- Compile the bridge TypeScript sources before the Android build. -->
+	<Target Name="CompileWebAssets" BeforeTargets="BeforeBuild" Condition="Exists('$(MSBuildProjectDirectory)/web/package.json')">
+		<Exec WorkingDirectory="$(MSBuildProjectDirectory)/web" Command="npm ci --prefer-offline" />
+		<Exec WorkingDirectory="$(MSBuildProjectDirectory)/web" Command="npx tsc" />
+		<Exec WorkingDirectory="$(MSBuildProjectDirectory)/web" Command="npx vite build" />
+	</Target>
 
 </Project>

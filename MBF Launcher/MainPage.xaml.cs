@@ -1,5 +1,6 @@
-﻿using DanTheMan827.OnDeviceADB;
+using DanTheMan827.OnDeviceADB;
 using MBF_Launcher.Services;
+using MBF_Launcher.WebView;
 using System.Diagnostics;
 
 namespace MBF_Launcher
@@ -11,8 +12,6 @@ namespace MBF_Launcher
         /// </summary>
         private static readonly AdbFlow Flow = new AdbFlow();
 
-        private readonly BridgeService Bridge = BridgeService.Instance;
-
         /// <summary>
         /// Number of times the fish has been tapped
         /// </summary>
@@ -22,6 +21,9 @@ namespace MBF_Launcher
         /// If the browser has been launched in the current instance
         /// </summary>
         private bool launchedMbf = false;
+
+        private bool updateCheckStarted;
+        private bool updateCheckInProgress;
 
         private AdbWrapper.AdbDevice[] _devices = [];
         public AdbWrapper.AdbDevice[] Devices
@@ -41,46 +43,18 @@ namespace MBF_Launcher
         {
             InitializeComponent();
 
+            versionLabel.Text = $"Version {AppInfo.VersionString}";
             BindingContext = this;
             Flow.OnMessage += this.Flow_OnMessage;
-            Bridge.BridgeExited += this.BridgeExited;
         }
 
         /// <summary>
-        /// Removes the event handler when the page is destroyed
-        /// </summary>
-        ~MainPage()
-        {
-            //Flow.OnMessage -= this.Flow_OnMessage;
-            //Bridge.BridgeExited -= this.BridgeExited;
-        }
-
-        /// <summary>
-        /// Launches the bridge process
+        /// Opens the browser page with the configured app URL and the C# ADB bridge.
         /// </summary>
         /// <returns></returns>
         public async Task LaunchMbf()
         {
-            try
-            {
-                if (!Bridge.IsRunning)
-                {
-                    await Bridge.Start(new BridgeService.BridgeStartInfo()
-                    {
-                        BinaryPath = Path.Combine(SharedData.NativeLibraryDir, "libMbfBridge.so"),
-                        AppUrl = AppConfig.AppUrl,
-                        AdbPort = AdbServer.AdbPort
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                MainThread.BeginInvokeOnMainThread(() => _ = DisplayAlert(AppResources.ErrorStartingBridge, ex.Message, AppResources.AlertDismiss));
-                return;
-            }
-
-            var startInfo = BridgeService.Instance.StartupInfo!;
-            var address = startInfo.BrowserUrl.ToString();
+            var address = AppConfig.AppUrl;
 
             if (mbfDevMode.IsChecked)
             {
@@ -96,7 +70,21 @@ namespace MBF_Launcher
                 }
             }
 
-            MainThread.BeginInvokeOnMainThread(() => _ = Navigation.PushAsync(new BrowserPage(address)));
+            var status = await Permissions.CheckStatusAsync<Permissions.StorageWrite>();
+            if (!App.IsPrimaryUser && status != PermissionStatus.Granted)
+            {
+                status = await Permissions.RequestAsync<Permissions.StorageWrite>();
+                if (status != PermissionStatus.Granted)
+                {
+                    await MainThread.InvokeOnMainThreadAsync(() => DisplayAlert(AppResources.Error, "Storage permission is required to launch the browser with the ADB bridge enabled.", AppResources.AlertDismiss));
+                    return;
+                }
+            }
+
+            MainThread.BeginInvokeOnMainThread(() => _ = Navigation.PushAsync(
+                new BrowserPage(address, App.IsPrimaryUser
+                    ? new TcpAdbSocketFactory("127.0.0.1", AdbServer.AdbPort)
+                    : new VirtualAdbServer())));
         }
 
         /// <summary>
@@ -293,24 +281,115 @@ namespace MBF_Launcher
             }
         });
 
-        #region Event Handlers
-        /// <summary>
-        /// Called when the bridge process has exited.  This is probably due to an error.
-        /// </summary>
-        /// <param name="process"></param>
-        /// <param name="e"></param>
-        private void BridgeExited(Process process, EventArgs e) => _ = Task.Run(async () =>
+        private async Task CheckForUpdatesAsync(bool userInitiated)
         {
-            await DisplayAlert(AppResources.BridgeProcessTerminated, process.StandardError.ReadToEnd(), AppResources.AlertDismiss);
-            await Helpers.RestartApp();
-        });
+            if (updateCheckInProgress || AppInfo.Version == new Version(0,0,-1))
+            {
+                return;
+            }
 
+            updateCheckInProgress = true;
+            var downloadStarted = false;
+            checkForUpdatesButton.IsEnabled = false;
+            checkForUpdatesButton.Text = "Checking…";
+
+            try
+            {
+                var update = await UpdateService.CheckForUpdateAsync();
+                if (update is null)
+                {
+                    if (userInitiated)
+                    {
+                        await DisplayAlert(
+                            "You're up to date",
+                            $"MBF Launcher {AppInfo.VersionString} is the newest version available for this release channel.",
+                            "OK");
+                    }
+
+                    return;
+                }
+
+                var releaseChannel = update.IsPrerelease ? "prerelease" : "stable release";
+                var accepted = await DisplayAlert(
+                    "Update available",
+                    $"MBF Launcher {update.Version} is available as a {releaseChannel}. " +
+                    $"You are currently using {AppInfo.VersionString}.\n\n" +
+                    "Download the APK and open the Android installer?",
+                    "Download update",
+                    "Not now");
+
+                if (!accepted)
+                {
+                    return;
+                }
+
+                downloadStarted = true;
+                updateProgressContainer.IsVisible = true;
+                updateProgressBar.Progress = 0;
+                updatePercentLabel.Text = "0%";
+                updateStatusLabel.Text = $"Downloading MBF Launcher {update.Version}…";
+
+                var progress = new Progress<double>(value =>
+                {
+                    var boundedValue = Math.Clamp(value, 0, 1);
+                    updateProgressBar.Progress = boundedValue;
+                    updatePercentLabel.Text = $"{boundedValue:P0}";
+                });
+
+                var apkPath = await UpdateService.DownloadApkAsync(update, progress);
+                updateProgressBar.Progress = 1;
+                updatePercentLabel.Text = "100%";
+                updateStatusLabel.Text = "Opening the Android installer…";
+                UpdateService.OpenPackageInstaller(apkPath);
+            }
+            catch (Exception ex)
+            {
+                updateProgressContainer.IsVisible = false;
+                if (userInitiated || downloadStarted)
+                {
+                    await DisplayAlert(
+                        "Update failed",
+                        $"MBF Launcher could not complete the update. {ex.Message}",
+                        AppResources.AlertDismiss);
+                }
+            }
+            finally
+            {
+                updateCheckInProgress = false;
+                checkForUpdatesButton.IsEnabled = true;
+                checkForUpdatesButton.Text = "Check for updates";
+            }
+        }
+
+        #region Event Handlers
         /// <summary>
         /// Called when the page is loaded
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void ContentPage_Loaded(object sender, EventArgs e) => Flow.SendState();
+        private void ContentPage_Loaded(object sender, EventArgs e)
+        {
+            if (!updateCheckStarted)
+            {
+                updateCheckStarted = true;
+                _ = CheckForUpdatesAsync(userInitiated: false);
+            }
+
+            if (App.IsPrimaryUser)
+            {
+                Flow.SendState();
+            }
+            else
+            {
+                // Non-primary users can't use the real ADB stack; skip the setup
+                // flow and show the connected layout directly so they can still
+                // configure the game and launch MBF with the virtual ADB server.
+                _ = ShowOneLayout(Layouts.Connected);
+            }
+        }
+
+        private async void checkForUpdatesButton_Clicked(object sender, EventArgs e)
+            => await CheckForUpdatesAsync(userInitiated: true);
 
         /// <summary>
         /// Called when the restart adb button is clicked
@@ -451,5 +530,4 @@ namespace MBF_Launcher
             AppConfig.DevMode = mbfDevMode.IsChecked;
         }
     }
-
 }

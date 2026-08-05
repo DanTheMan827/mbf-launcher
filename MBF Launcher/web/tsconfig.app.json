@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "lib": ["ES2020", "DOM"],
+    "removeComments": false,
+    "noEmit": true
+  },
+  "include": [
+    "src/mbf-bridge.d.ts",
+    "src/adb-server-connector.ts",
+    "src/virtual_adb_test.ts",
+    "vite.config.ts"
+  ]
+}
