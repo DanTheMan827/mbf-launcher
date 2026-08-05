@@ -25,7 +25,9 @@
     <!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
     <WindowsPackageType>None</WindowsPackageType>
 
-    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">29.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">28.0</SupportedOSPlatformVersion>
+    <AndroidCompileSdkVersion>28</AndroidCompileSdkVersion>
+    <AndroidTargetSdkVersion>28</AndroidTargetSdkVersion>
 
 		<PackageIcon>Resources/AppIcon/icon.png</PackageIcon>
 

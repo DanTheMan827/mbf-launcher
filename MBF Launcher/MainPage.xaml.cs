@@ -65,8 +65,8 @@ namespace MBF_Launcher
                 }
             }
 
-            var status = await Permissions.CheckStatusAsync<Permissions.StorageRead>();
-            if (!App.IsPrimaryUser() && status != PermissionStatus.Granted)
+            var status = await Permissions.CheckStatusAsync<Permissions.StorageWrite>();
+            if (!App.IsPrimaryUser && status != PermissionStatus.Granted)
             {
                 status = await Permissions.RequestAsync<Permissions.StorageWrite>();
                 if (status != PermissionStatus.Granted)
@@ -77,7 +77,7 @@ namespace MBF_Launcher
             }
 
             MainThread.BeginInvokeOnMainThread(() => _ = Navigation.PushAsync(
-                new BrowserPage(address, App.IsPrimaryUser()
+                new BrowserPage(address, App.IsPrimaryUser
                     ? new TcpAdbSocketFactory("127.0.0.1", AdbServer.AdbPort)
                     : new VirtualAdbServer())));
         }
@@ -284,7 +284,7 @@ namespace MBF_Launcher
         /// <param name="e"></param>
         private void ContentPage_Loaded(object sender, EventArgs e)
         {
-            if (App.IsPrimaryUser())
+            if (App.IsPrimaryUser)
             {
                 Flow.SendState();
             }

@@ -32,8 +32,8 @@ namespace MBF_Launcher.WebView
         public const string DeviceModel = "MBF_Virtual_Device";
 
         private const string DeviceProduct = "mbflauncher";
-        private const int    AdbVersion    = 41;        // ADB protocol version 0x29
-        private const int    MaxSyncChunk  = 64 * 1024; // bytes per DATA chunk
+        private const int AdbVersion = 41;        // ADB protocol version 0x29
+        private const int MaxSyncChunk = 64 * 1024; // bytes per DATA chunk
 
         /// <summary>
         /// Feature flags advertised to clients.  Kept minimal so that only the
@@ -115,7 +115,8 @@ namespace MBF_Launcher.WebView
         /// </summary>
         public void Dispose()
         {
-            if (_disposed) return;
+            if (_disposed)
+                return;
             _disposed = true;
             _disconnectCts.Cancel();
             _disconnectCts.Dispose();
@@ -126,7 +127,8 @@ namespace MBF_Launcher.WebView
         private async Task HandleConnectionAsync(Stream stream)
         {
             var service = await ReadServiceAsync(stream);
-            if (service is null) return;
+            if (service is null)
+                return;
             await DispatchHostServiceAsync(stream, service);
         }
 
@@ -134,6 +136,7 @@ namespace MBF_Launcher.WebView
 
         private async Task DispatchHostServiceAsync(Stream stream, string service)
         {
+            Directory.CreateDirectory($"/data/data/{SharedData.PackageID}/files");
             // ── Informational queries ────────────────────────────────────────
 
             if (service == "host:version")
@@ -171,9 +174,9 @@ namespace MBF_Launcher.WebView
 
             // wait-for-*-device / wait-for-*-connect: device is already present,
             // so both OKAYs are sent immediately.
-            if (service.EndsWith(":wait-for-any-device")  ||
-                service.EndsWith(":wait-for-any-connect")  ||
-                service == "host:wait-for-any-device"      ||
+            if (service.EndsWith(":wait-for-any-device") ||
+                service.EndsWith(":wait-for-any-connect") ||
+                service == "host:wait-for-any-device" ||
                 service == "host:wait-for-any-connect")
             {
                 await WriteOkayAsync(stream);   // request acknowledged
@@ -214,7 +217,7 @@ namespace MBF_Launcher.WebView
             }
 
             // Classic and transport-id variants: send OKAY only (no 8-byte ID).
-            if (service == "host:transport-any"  ||
+            if (service == "host:transport-any" ||
                 service == "host:transport-local" ||
                 service == $"host:transport:{DeviceSerial}" ||
                 service.StartsWith("host:transport-id:"))
@@ -233,6 +236,7 @@ namespace MBF_Launcher.WebView
 
         private async Task DispatchDeviceServiceAsync(Stream stream, string service)
         {
+            service = service.Replace("/data/local/tmp", $"/data/data/{SharedData.PackageID}/files");
             // Device features (can be queried after transport switch)
             if (service == "host:features" || service == "features")
             {
@@ -305,10 +309,10 @@ namespace MBF_Launcher.WebView
                 using var proc = new Process();
                 proc.StartInfo = new ProcessStartInfo
                 {
-                    FileName               = "/system/bin/getprop",
+                    FileName = "/system/bin/getprop",
                     RedirectStandardOutput = true,
-                    RedirectStandardError  = true,
-                    UseShellExecute        = false,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
                 };
                 if (!string.IsNullOrEmpty(key))
                     proc.StartInfo.ArgumentList.Add(key);
@@ -337,25 +341,25 @@ namespace MBF_Launcher.WebView
         /// </summary>
         private static string? GetSimulatedProp(string key)
         {
-            var abis   = Android.OS.Build.SupportedAbis?.ToArray() ?? new[] { "arm64-v8a" };
+            var abis = Android.OS.Build.SupportedAbis?.ToArray() ?? new[] { "arm64-v8a" };
             var abis64 = abis.Where(Is64BitAbi).ToArray();
             var abis32 = abis.Where(a => !Is64BitAbi(a)).ToArray();
 
             return key switch
             {
-                "ro.product.cpu.abi"         => abis.FirstOrDefault() ?? "arm64-v8a",
-                "ro.product.cpu.abilist"     => string.Join(",", abis),
-                "ro.product.cpu.abilist64"   => string.Join(",", abis64),
-                "ro.product.cpu.abilist32"   => string.Join(",", abis32),
-                "ro.product.model"           => Android.OS.Build.Model            ?? DeviceModel,
-                "ro.product.name"            => Android.OS.Build.Product          ?? DeviceProduct,
-                "ro.product.manufacturer"    => Android.OS.Build.Manufacturer     ?? "unknown",
-                "ro.hardware"                => Android.OS.Build.Hardware         ?? "unknown",
-                "ro.build.id"                => Android.OS.Build.Id               ?? "unknown",
-                "ro.build.version.sdk"       => ((int)Android.OS.Build.VERSION.SdkInt).ToString(),
-                "ro.build.version.release"   => Android.OS.Build.VERSION.Release  ?? DefaultAndroidRelease,
-                ""                           => BuildAllSimulatedProps(abis, abis64, abis32),
-                _                            => null,
+                "ro.product.cpu.abi" => abis.FirstOrDefault() ?? "arm64-v8a",
+                "ro.product.cpu.abilist" => string.Join(",", abis),
+                "ro.product.cpu.abilist64" => string.Join(",", abis64),
+                "ro.product.cpu.abilist32" => string.Join(",", abis32),
+                "ro.product.model" => Android.OS.Build.Model ?? DeviceModel,
+                "ro.product.name" => Android.OS.Build.Product ?? DeviceProduct,
+                "ro.product.manufacturer" => Android.OS.Build.Manufacturer ?? "unknown",
+                "ro.hardware" => Android.OS.Build.Hardware ?? "unknown",
+                "ro.build.id" => Android.OS.Build.Id ?? "unknown",
+                "ro.build.version.sdk" => ((int)Android.OS.Build.VERSION.SdkInt).ToString(),
+                "ro.build.version.release" => Android.OS.Build.VERSION.Release ?? DefaultAndroidRelease,
+                "" => BuildAllSimulatedProps(abis, abis64, abis32),
+                _ => null,
             };
         }
 
@@ -396,17 +400,17 @@ namespace MBF_Launcher.WebView
             using var process = new Process();
             process.StartInfo = new ProcessStartInfo
             {
-                FileName             = "/system/bin/sh",
-                RedirectStandardInput  = true,
+                FileName = "/system/bin/sh",
+                RedirectStandardInput = true,
                 RedirectStandardOutput = true,
-                RedirectStandardError  = true,
-                UseShellExecute      = false,
+                RedirectStandardError = true,
+                UseShellExecute = false,
             };
 
             if (!string.IsNullOrEmpty(cmd))
             {
                 process.StartInfo.ArgumentList.Add("-c");
-                process.StartInfo.ArgumentList.Add(cmd);
+                process.StartInfo.ArgumentList.Add(cmd.Replace("/data/local/tmp", $"/data/data/{SharedData.PackageID}/files"));
             }
 
             process.Start();
@@ -414,7 +418,8 @@ namespace MBF_Launcher.WebView
             // Forward stdin: socket → process (supports interactive shells)
             var stdinTask = Task.Run(async () =>
             {
-                try   { await stream.CopyToAsync(process.StandardInput.BaseStream); }
+                try
+                { await stream.CopyToAsync(process.StandardInput.BaseStream); }
                 catch { /* socket closed */ }
                 finally { try { process.StandardInput.Close(); } catch { } }
             });
@@ -429,7 +434,8 @@ namespace MBF_Launcher.WebView
 
         private static async Task CopyAndSuppressAsync(Stream src, Stream dst)
         {
-            try { await src.CopyToAsync(dst); }
+            try
+            { await src.CopyToAsync(dst); }
             catch { /* destination closed */ }
         }
 
@@ -437,47 +443,57 @@ namespace MBF_Launcher.WebView
 
         private static async Task HandleSyncAsync(Stream stream)
         {
-            var idBuf  = new byte[4];
+            var idBuf = new byte[4];
             var valBuf = new byte[4];
 
             while (true)
             {
-                if (await ReadExactAsync(stream, idBuf,  4) < 4) return;
-                if (await ReadExactAsync(stream, valBuf, 4) < 4) return;
+                if (await ReadExactAsync(stream, idBuf, 4) < 4)
+                    return;
+                if (await ReadExactAsync(stream, valBuf, 4) < 4)
+                    return;
 
-                var id    = Encoding.ASCII.GetString(idBuf);
+                var id = Encoding.ASCII.GetString(idBuf);
                 var value = BitConverter.ToUInt32(valBuf, 0);   // little-endian
 
                 switch (id)
                 {
                     case "STAT":
-                    {
-                        var path = await ReadUtf8Async(stream, (int)value);
-                        if (path is null) return;
-                        await HandleSyncStatAsync(stream, path);
-                        break;
-                    }
+                        {
+                            var path = await ReadUtf8Async(stream, (int)value);
+                            if (path is null)
+                                return;
+                            path = path.Replace("/data/local/tmp", $"/data/data/{SharedData.PackageID}/files");
+                            await HandleSyncStatAsync(stream, path);
+                            break;
+                        }
                     case "LIST":
-                    {
-                        var path = await ReadUtf8Async(stream, (int)value);
-                        if (path is null) return;
-                        await HandleSyncListAsync(stream, path);
-                        break;
-                    }
+                        {
+                            var path = await ReadUtf8Async(stream, (int)value);
+                            if (path is null)
+                                return;
+                            path = path.Replace("/data/local/tmp", $"/data/data/{SharedData.PackageID}/files");
+                            await HandleSyncListAsync(stream, path);
+                            break;
+                        }
                     case "SEND":
-                    {
-                        var arg = await ReadUtf8Async(stream, (int)value);
-                        if (arg is null) return;
-                        await HandleSyncSendAsync(stream, arg);
-                        break;
-                    }
+                        {
+                            var arg = await ReadUtf8Async(stream, (int)value);
+                            if (arg is null)
+                                return;
+                            arg = arg.Replace("/data/local/tmp", $"/data/data/{SharedData.PackageID}/files");
+                            await HandleSyncSendAsync(stream, arg);
+                            break;
+                        }
                     case "RECV":
-                    {
-                        var path = await ReadUtf8Async(stream, (int)value);
-                        if (path is null) return;
-                        await HandleSyncRecvAsync(stream, path);
-                        break;
-                    }
+                        {
+                            var path = await ReadUtf8Async(stream, (int)value);
+                            if (path is null)
+                                return;
+                            path = path.Replace("/data/local/tmp", $"/data/data/{SharedData.PackageID}/files");
+                            await HandleSyncRecvAsync(stream, path);
+                            break;
+                        }
                     case "QUIT":
                         return;
                     default:
@@ -496,13 +512,13 @@ namespace MBF_Launcher.WebView
                 if (File.Exists(path))
                 {
                     var fi = new FileInfo(path);
-                    mode  = 0x81A4u;   // S_IFREG | 0644
-                    size  = (uint)Math.Min(fi.Length, uint.MaxValue);
+                    mode = 0x81A4u;   // S_IFREG | 0644
+                    size = (uint)Math.Min(fi.Length, uint.MaxValue);
                     mtime = ToUnixTime(fi.LastWriteTimeUtc);
                 }
                 else if (Directory.Exists(path))
                 {
-                    mode  = 0x41EDu;   // S_IFDIR | 0755
+                    mode = 0x41EDu;   // S_IFDIR | 0755
                     mtime = ToUnixTime(new DirectoryInfo(path).LastWriteTimeUtc);
                 }
             }
@@ -530,14 +546,14 @@ namespace MBF_Launcher.WebView
 
                             if (File.Exists(entry))
                             {
-                                var fi  = new FileInfo(entry);
-                                entMode  = 0x81A4u;
-                                entSize  = (uint)Math.Min(fi.Length, uint.MaxValue);
+                                var fi = new FileInfo(entry);
+                                entMode = 0x81A4u;
+                                entSize = (uint)Math.Min(fi.Length, uint.MaxValue);
                                 entMtime = ToUnixTime(fi.LastWriteTimeUtc);
                             }
                             else
                             {
-                                entMode  = 0x41EDu;
+                                entMode = 0x41EDu;
                                 entMtime = ToUnixTime(new DirectoryInfo(entry).LastWriteTimeUtc);
                             }
 
@@ -562,7 +578,7 @@ namespace MBF_Launcher.WebView
         private static async Task HandleSyncSendAsync(Stream stream, string arg)
         {
             // arg is "path,mode_decimal"
-            var comma    = arg.LastIndexOf(',');
+            var comma = arg.LastIndexOf(',');
             var destPath = comma >= 0 ? arg[..comma] : arg;
 
             try
@@ -572,22 +588,25 @@ namespace MBF_Launcher.WebView
                     Directory.CreateDirectory(dir);
 
                 using var file = File.Open(destPath, FileMode.Create, FileAccess.Write);
-                uint mtime      = 0;
-                var  chunkIdBuf  = new byte[4];
-                var  chunkLenBuf = new byte[4];
+                uint mtime = 0;
+                var chunkIdBuf = new byte[4];
+                var chunkLenBuf = new byte[4];
 
                 while (true)
                 {
-                    if (await ReadExactAsync(stream, chunkIdBuf,  4) < 4) break;
-                    if (await ReadExactAsync(stream, chunkLenBuf, 4) < 4) break;
+                    if (await ReadExactAsync(stream, chunkIdBuf, 4) < 4)
+                        break;
+                    if (await ReadExactAsync(stream, chunkLenBuf, 4) < 4)
+                        break;
 
-                    var chunkId  = Encoding.ASCII.GetString(chunkIdBuf);
+                    var chunkId = Encoding.ASCII.GetString(chunkIdBuf);
                     var chunkLen = BitConverter.ToUInt32(chunkLenBuf, 0);
 
                     if (chunkId == "DATA")
                     {
                         var data = await ReadBytesAsync(stream, (int)chunkLen);
-                        if (data is null) break;
+                        if (data is null)
+                            break;
                         await file.WriteAsync(data);
                     }
                     else if (chunkId == "DONE")
@@ -595,7 +614,8 @@ namespace MBF_Launcher.WebView
                         mtime = chunkLen;   // DONE's "length" field carries the mtime
                         break;
                     }
-                    else break;
+                    else
+                        break;
                 }
 
                 file.Close();
@@ -636,7 +656,8 @@ namespace MBF_Launcher.WebView
                 while (true)
                 {
                     var n = await file.ReadAsync(buf);
-                    if (n == 0) break;
+                    if (n == 0)
+                        break;
                     await WriteSyncIdAsync(stream, "DATA");
                     await stream.WriteAsync(BitConverter.GetBytes((uint)n));
                     await stream.WriteAsync(buf.AsMemory(0, n));
@@ -663,11 +684,13 @@ namespace MBF_Launcher.WebView
         private static async Task<string?> ReadServiceAsync(Stream stream)
         {
             var lenBuf = new byte[4];
-            if (await ReadExactAsync(stream, lenBuf, 4) < 4) return null;
+            if (await ReadExactAsync(stream, lenBuf, 4) < 4)
+                return null;
             if (!int.TryParse(Encoding.ASCII.GetString(lenBuf),
                     System.Globalization.NumberStyles.HexNumber, null, out var len))
                 return null;
-            if (len <= 0) return string.Empty;
+            if (len <= 0)
+                return string.Empty;
             var data = await ReadBytesAsync(stream, len);
             return data is null ? null : Encoding.ASCII.GetString(data);
         }
@@ -700,7 +723,8 @@ namespace MBF_Launcher.WebView
 
         private static async Task<byte[]?> ReadBytesAsync(Stream stream, int count)
         {
-            if (count <= 0) return Array.Empty<byte>();
+            if (count <= 0)
+                return Array.Empty<byte>();
             var buf = new byte[count];
             return await ReadExactAsync(stream, buf, count) < count ? null : buf;
         }
@@ -711,7 +735,8 @@ namespace MBF_Launcher.WebView
             while (total < count)
             {
                 var n = await stream.ReadAsync(buffer, total, count - total);
-                if (n == 0) break;
+                if (n == 0)
+                    break;
                 total += n;
             }
             return total;

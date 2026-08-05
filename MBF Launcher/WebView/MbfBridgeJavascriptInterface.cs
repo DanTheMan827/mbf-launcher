@@ -1,6 +1,7 @@
 using Android.Webkit;
 using Java.Interop;
 using System.Collections.Concurrent;
+using System.Linq;
 
 namespace MBF_Launcher.WebView
 {
@@ -43,6 +44,12 @@ namespace MBF_Launcher.WebView
         private readonly IAdbSocketFactory _socketFactory;
         private readonly ConcurrentDictionary<string, Connection> _connections = new();
 
+        // Shared watcher connection that waits for the server to stop. This is
+        // created when the first JS connection is opened and disposed when the
+        // last JS connection is closed.
+        private readonly object _watcherLock = new();
+        private Connection? _watcherConn;
+
         public MbfBridgeJavascriptInterface(Android.Webkit.WebView nativeWebView, IAdbSocketFactory socketFactory)
         {
             _nativeWebView = nativeWebView;
@@ -71,6 +78,12 @@ namespace MBF_Launcher.WebView
                     var socket = await _socketFactory.ConnectAsync();
                     var conn = new Connection(id, socket);
                     _connections[id] = conn;
+
+                    // Ensure the shared watcher exists when the first connection
+                    // is opened (or when new connections appear after it was
+                    // previously disposed).
+                    _ = EnsureWatcherAsync();
+
                     DispatchFire($"window.__mbfBridgeDispatch('connected',{J(callbackId)},{J(id)})");
                     _ = ReadLoop(conn);
                 }
@@ -183,8 +196,127 @@ namespace MBF_Launcher.WebView
                 conn.Cts.Cancel();
                 conn.Socket.Close();
                 DispatchFire($"window.__mbfBridgeDispatch('closed',{J(id)})");
+
+                // If there are no more active JS connections, dispose the
+                // shared watcher connection.
+                if (_connections.IsEmpty)
+                {
+                    DisposeWatcher();
+                }
             }
             return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Ensure the shared watcher connection exists. If it does not, create
+        /// it and run the watcher loop which will observe the watcher socket
+        /// and, on close, remove all active JS connections (updating state on
+        /// the JS side).
+        /// </summary>
+        private Task EnsureWatcherAsync()
+        {
+            lock (_watcherLock)
+            {
+                if (_watcherConn != null)
+                {
+                    return Task.CompletedTask;
+                }
+
+                // Create watcher asynchronously (fire-and-forget)
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var socket = await _socketFactory.ConnectAsync();
+                        var watcher = new Connection("__watcher__", socket);
+
+                        lock (_watcherLock)
+                        {
+                            _watcherConn = watcher;
+                        }
+
+                        // Start the watcher loop which will wait until the
+                        // watcher stream closes (e.g. when the server stops).
+                        await WatcherLoop(watcher);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[MbfBridge] Watcher creation failed: {ex.Message}");
+                        // If watcher cannot be created, we don't treat this as a
+                        // fatal error for existing connections. JS-side should
+                        // continue to operate; connections will fail individually
+                        // if the server goes away.
+                    }
+                });
+
+                return Task.CompletedTask;
+            }
+        }
+
+        private async Task WatcherLoop(Connection watcher)
+        {
+            var buf = new byte[ReadBufferSize];
+            try
+            {
+                // Read until the watcher stream ends. The watcher service that
+                // the client requested should hold the connection open until
+                // the server stops; when it closes, the ReadAsync will return 0
+                // or throw and we then propagate closure to all active
+                // JS connections.
+                while (true)
+                {
+                    var n = await watcher.Stream.ReadAsync(buf, watcher.CancellationToken);
+                    if (n == 0) break;
+                    // Ignore data from watcher; it is only used as a sentinel.
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Watcher was disposed explicitly; nothing to do.
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MbfBridge] WatcherLoop error: {ex.Message}");
+            }
+            finally
+            {
+                // When watcher closes, remove all active JS connections. Use a
+                // snapshot of keys to avoid modifying the collection while
+                // enumerating.
+                var keys = _connections.Keys.ToArray();
+                foreach (var k in keys)
+                {
+                    // RemoveAndClose will only dispatch if the connection was
+                    // still present (TryRemove) so duplicate events are
+                    // prevented.
+                    await RemoveAndClose(k);
+                }
+
+                // Dispose the watcher if it wasn't already disposed.
+                DisposeWatcher();
+            }
+        }
+
+        private void DisposeWatcher()
+        {
+            lock (_watcherLock)
+            {
+                if (_watcherConn is null) return;
+
+                try
+                {
+                    _watcherConn.Cts.Cancel();
+                }
+                catch { }
+
+                try
+                {
+                    _watcherConn.Socket.Close();
+                }
+                catch { }
+
+                _watcherConn = null;
+            }
         }
 
         /// <summary>
