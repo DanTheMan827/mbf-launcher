@@ -1,154 +1,565 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:MBF_Launcher"
              x:Class="MBF_Launcher.MainPage"
              Loaded="ContentPage_Loaded"
-             xmlns:local="clr-namespace:MBF_Launcher"
-             NavigationPage.HasNavigationBar="False">
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#07111F">
+
+    <ContentPage.Resources>
+        <Color x:Key="PageBackground">#07111F</Color>
+        <Color x:Key="PanelBackground">#0D1929</Color>
+        <Color x:Key="CardBackground">#111F31</Color>
+        <Color x:Key="CardBackgroundElevated">#16263A</Color>
+        <Color x:Key="BorderColor">#263B53</Color>
+        <Color x:Key="Primary">#45C2E8</Color>
+        <Color x:Key="PrimaryPressed">#2AA7CE</Color>
+        <Color x:Key="Success">#56D49B</Color>
+        <Color x:Key="TextPrimary">#F4F8FC</Color>
+        <Color x:Key="TextSecondary">#A9B8C9</Color>
+        <Color x:Key="TextMuted">#73859A</Color>
+        <Color x:Key="Danger">#F07D83</Color>
+
+        <LinearGradientBrush x:Key="HeroGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#142943" Offset="0.0" />
+            <GradientStop Color="#0C1A2C" Offset="0.55" />
+            <GradientStop Color="#102A36" Offset="1.0" />
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="AccentGradient" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#45C2E8" Offset="0.0" />
+            <GradientStop Color="#5DD7B8" Offset="1.0" />
+        </LinearGradientBrush>
+
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="BackgroundColor" Value="{StaticResource CardBackground}" />
+            <Setter Property="Stroke" Value="{StaticResource BorderColor}" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 20" />
+            <Setter Property="Padding" Value="24" />
+        </Style>
+
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+            <Setter Property="TextColor" Value="#04131B" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="HeightRequest" Value="50" />
+            <Setter Property="Padding" Value="20,12" />
+        </Style>
+
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button">
+            <Setter Property="BackgroundColor" Value="#17283C" />
+            <Setter Property="BorderColor" Value="{StaticResource BorderColor}" />
+            <Setter Property="BorderWidth" Value="1" />
+            <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="HeightRequest" Value="48" />
+            <Setter Property="Padding" Value="18,10" />
+        </Style>
+
+        <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
+            <Setter Property="TextColor" Value="{StaticResource Danger}" />
+            <Setter Property="BorderColor" Value="#5B353D" />
+            <Setter Property="BackgroundColor" Value="#281A23" />
+        </Style>
+
+        <Style x:Key="SectionTitleStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="FontSize" Value="21" />
+        </Style>
+
+        <Style x:Key="BodyStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="{StaticResource TextSecondary}" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="LineHeight" Value="1.25" />
+        </Style>
+
+        <Style x:Key="CaptionStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="{StaticResource TextMuted}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="CharacterSpacing" Value="0.6" />
+        </Style>
+
+        <Style x:Key="FieldLabelStyle" TargetType="Label">
+            <Setter Property="TextColor" Value="{StaticResource TextSecondary}" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="VerticalOptions" Value="Center" />
+        </Style>
+
+        <Style x:Key="EntryStyle" TargetType="Entry">
+            <Setter Property="BackgroundColor" Value="#0B1726" />
+            <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+            <Setter Property="PlaceholderColor" Value="{StaticResource TextMuted}" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="HeightRequest" Value="48" />
+            <Setter Property="Margin" Value="0" />
+        </Style>
+
+        <Style x:Key="PickerStyle" TargetType="Picker">
+            <Setter Property="BackgroundColor" Value="#0B1726" />
+            <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+            <Setter Property="TitleColor" Value="{StaticResource TextMuted}" />
+            <Setter Property="HeightRequest" Value="48" />
+        </Style>
+    </ContentPage.Resources>
+
     <ScrollView>
-        <local:SpacedLayout IsVisible="True" Padding="30,30">
-            <local:SpacedLayout IsVisible="True">
-                <Image x:Name="Fish" Source="fish.png" MaximumWidthRequest="300">
-                    <Image.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="Fish_Tapped" />
-                    </Image.GestureRecognizers>
-                </Image>
-                <Label 
-                    x:Name="statusLabel" 
-                    FontAttributes="Bold" 
-                    HorizontalOptions="Center" 
-                    HorizontalTextAlignment="Center" />
-            </local:SpacedLayout>
-            <local:SpacedLayout x:Name="statusLayout">
-                <ActivityIndicator IsRunning="True" />
-            </local:SpacedLayout>
-            <local:SpacedLayout x:Name="wifiLayout">
-                <Label Text="{x:Static local:AppResources.EnableWirelessDebugging}" />
-                <Button
-                    Clicked="launchDeveloperSettingsButton_Clicked"
-                    Text="{x:Static local:AppResources.LaunchDeveloperSettings}" />
-            </local:SpacedLayout>
-            <local:SpacedLayout x:Name="wifiEnablingLayout">
-                <Label Text="{x:Static local:AppResources.WirelessDebuggingAuthorization}" />
-                <Button
-                    x:Name="cycleWifiDebugging"
-                    Clicked="cycleWifiDebugging_Clicked"
-                    Text="{x:Static local:AppResources.TryAgain}"  />
-            </local:SpacedLayout>
-            <local:SpacedLayout x:Name="authorizationLayout">
-                <Button
-                    x:Name="restartAdbButton"
-                    Clicked="restartAdbButton_Clicked"
-                    Text="{x:Static local:AppResources.TryAgain}"  />
-            </local:SpacedLayout>
-            <local:SpacedLayout x:Name="pairingLayout">
-                <Label Text="{x:Static local:AppResources.PairingInstructions}" />
-                <Button
-                    Clicked="launchDeveloperSettingsButton_Clicked"
-                    Text="{x:Static local:AppResources.LaunchDeveloperSettings}" />
-                <Grid 
-                    ColumnSpacing="10" 
-                    RowSpacing="10" 
-                    Padding="0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+        <Grid Padding="28"
+              ColumnDefinitions="310,*"
+              ColumnSpacing="24"
+              RowDefinitions="Auto">
 
-                    <!-- First row: Pairing Code -->
-                    <Label 
-                        Grid.Row="0"
-                        Grid.Column="0"
-                        Text="{x:Static local:AppResources.PairingCode}"
-                        HorizontalOptions="End"
-                        VerticalOptions="Center" />
-                    <Entry 
-                        Grid.Row="0"
-                        Grid.Column="1"
-                        x:Name="pairingCodeEntry"
-                        IsTextPredictionEnabled="False"
-                        TextChanged="pairingCodeEntry_TextChanged"
-                        Keyboard="Numeric" />
+            <Border Grid.Column="0"
+                    Padding="26"
+                    Stroke="#28415A"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 26"
+                    Background="{StaticResource HeroGradient}">
+                <Grid RowDefinitions="Auto,*,Auto" RowSpacing="24">
+                    <VerticalStackLayout Grid.Row="0" Spacing="16">
+                        <Border WidthRequest="152"
+                                HeightRequest="152"
+                                HorizontalOptions="Center"
+                                Padding="18"
+                                Stroke="#31536D"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 76"
+                                BackgroundColor="#102A3A">
+                            <Image x:Name="Fish"
+                                   Source="fish.png"
+                                   Aspect="AspectFit"
+                                   SemanticProperties.Description="MBF Launcher fish logo">
+                                <Image.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="Fish_Tapped" />
+                                </Image.GestureRecognizers>
+                            </Image>
+                        </Border>
 
-                    <!-- Second row: Port -->
-                    <Label 
-                        Grid.Row="1"
-                        Grid.Column="0"
-                        x:Name="portLabel"
-                        Text="{x:Static local:AppResources.Port}"
-                        HorizontalOptions="End"
-                        VerticalOptions="Center" />
-                    <Entry 
-                        Grid.Row="1"
-                        Grid.Column="1"
-                        x:Name="portEntry"
-                        IsTextPredictionEnabled="False"
-                        Keyboard="Numeric" />
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="MBF Launcher"
+                                   TextColor="{StaticResource TextPrimary}"
+                                   FontAttributes="Bold"
+                                   FontSize="30"
+                                   HorizontalTextAlignment="Center" />
+                            <Label Text="A guided, on-device connection to ModsBeforeFriday"
+                                   Style="{StaticResource BodyStyle}"
+                                   HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+
+                        <Border Padding="14,12"
+                                Stroke="#29475D"
+                                StrokeThickness="1"
+                                StrokeShape="RoundRectangle 14"
+                                BackgroundColor="#0C2130">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <Border WidthRequest="10"
+                                        HeightRequest="10"
+                                        VerticalOptions="Center"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 5"
+                                        BackgroundColor="{StaticResource Success}" />
+                                <Label Grid.Column="1"
+                                       x:Name="statusLabel"
+                                       Text="Preparing device connection…"
+                                       TextColor="{StaticResource TextPrimary}"
+                                       FontAttributes="Bold"
+                                       FontSize="13"
+                                       LineBreakMode="WordWrap" />
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Grid.Row="1"
+                                         VerticalOptions="Center"
+                                         Spacing="14">
+                        <Label Text="CONNECTION WORKFLOW"
+                               Style="{StaticResource CaptionStyle}" />
+                        <Grid ColumnDefinitions="28,*"
+                              RowDefinitions="Auto,Auto,Auto"
+                              ColumnSpacing="12"
+                              RowSpacing="14">
+                            <Border Grid.Row="0"
+                                    WidthRequest="28"
+                                    HeightRequest="28"
+                                    Padding="0"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 14"
+                                    BackgroundColor="#1B4050">
+                                <Label Text="1"
+                                       TextColor="{StaticResource Primary}"
+                                       FontAttributes="Bold"
+                                       HorizontalTextAlignment="Center"
+                                       VerticalTextAlignment="Center" />
+                            </Border>
+                            <Label Grid.Row="0" Grid.Column="1"
+                                   Text="Enable wireless debugging"
+                                   Style="{StaticResource BodyStyle}"
+                                   VerticalTextAlignment="Center" />
+
+                            <Border Grid.Row="1"
+                                    WidthRequest="28"
+                                    HeightRequest="28"
+                                    Padding="0"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 14"
+                                    BackgroundColor="#1B4050">
+                                <Label Text="2"
+                                       TextColor="{StaticResource Primary}"
+                                       FontAttributes="Bold"
+                                       HorizontalTextAlignment="Center"
+                                       VerticalTextAlignment="Center" />
+                            </Border>
+                            <Label Grid.Row="1" Grid.Column="1"
+                                   Text="Authorize and pair the device"
+                                   Style="{StaticResource BodyStyle}"
+                                   VerticalTextAlignment="Center" />
+
+                            <Border Grid.Row="2"
+                                    WidthRequest="28"
+                                    HeightRequest="28"
+                                    Padding="0"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 14"
+                                    BackgroundColor="#1B4050">
+                                <Label Text="3"
+                                       TextColor="{StaticResource Primary}"
+                                       FontAttributes="Bold"
+                                       HorizontalTextAlignment="Center"
+                                       VerticalTextAlignment="Center" />
+                            </Border>
+                            <Label Grid.Row="2" Grid.Column="1"
+                                   Text="Launch MBF in the secure browser"
+                                   Style="{StaticResource BodyStyle}"
+                                   VerticalTextAlignment="Center" />
+                        </Grid>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Grid.Row="2" Spacing="10">
+                        <Label x:Name="versionLabel"
+                               Text="Version"
+                               Style="{StaticResource CaptionStyle}"
+                               HorizontalTextAlignment="Center" />
+                        <Button x:Name="checkForUpdatesButton"
+                                Text="Check for updates"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Clicked="checkForUpdatesButton_Clicked" />
+                    </VerticalStackLayout>
                 </Grid>
-                <Button 
-                    x:Name="pairingConfirmButton"
-                    Text="{x:Static local:AppResources.Pair}"
-                    Clicked="pairingConfirmButton_Clicked" />
-            </local:SpacedLayout>
-            <local:SpacedLayout x:Name="connectLayout">
-                <Label Text="{x:Static local:AppResources.PairingSuccessful}" />
-                <Grid 
-                    ColumnSpacing="10" 
-                    RowSpacing="10" 
-                    Padding="0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Label 
-                        Grid.Row="0"
-                        Grid.Column="0"
-                        Text="{x:Static local:AppResources.Port}"
-                        HorizontalOptions="End"
-                        VerticalOptions="Center" />
-                    <Entry 
-                        Grid.Row="0"
-                        Grid.Column="1"
-                        x:Name="debugPortEntry"
-                        IsTextPredictionEnabled="False"
-                        Keyboard="Numeric" />
+            </Border>
+
+            <VerticalStackLayout Grid.Column="1" Spacing="16">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Device setup"
+                               TextColor="{StaticResource TextPrimary}"
+                               FontAttributes="Bold"
+                               FontSize="28" />
+                        <Label Text="Follow the current step below. MBF Launcher will advance automatically as the device becomes ready."
+                               Style="{StaticResource BodyStyle}" />
+                    </VerticalStackLayout>
+
+                    <Border Grid.Column="1"
+                            Padding="14,9"
+                            VerticalOptions="Start"
+                            Stroke="#285B63"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 14"
+                            BackgroundColor="#102C32">
+                        <HorizontalStackLayout Spacing="8">
+                            <Border WidthRequest="8"
+                                    HeightRequest="8"
+                                    VerticalOptions="Center"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 4"
+                                    BackgroundColor="{StaticResource Success}" />
+                            <Label Text="LOCAL CONNECTION"
+                                   TextColor="#88E4C1"
+                                   FontAttributes="Bold"
+                                   FontSize="11"
+                                   CharacterSpacing="0.8" />
+                        </HorizontalStackLayout>
+                    </Border>
                 </Grid>
-                <Button
-                    x:Name="postPairingConnectButton"
-                    Clicked="postPairingConnectButton_Clicked"
-                    Text="{x:Static local:AppResources.Connect}" />
-            </local:SpacedLayout>
-            <local:SpacedLayout x:Name="connectedLayout">
-                <VerticalStackLayout>
-                    <Label 
-                        x:Name="devicesLabel" 
-                        FontAttributes="Bold"
-                        HorizontalTextAlignment="Center" />
-                </VerticalStackLayout>
-                <Button Clicked="openBrowserButton_Clicked" Text="{x:Static local:AppResources.OpenBrowser}" />
-            </local:SpacedLayout>
-            <local:SpacedLayout x:Name="developerLayout">
-                <Label FontAttributes="Bold">Developer Options</Label>
-                <VerticalStackLayout>
-                    <Label>Selected Game</Label>
-                    <Picker x:Name="packagePicker" Title="{x:Static local:AppResources.GameSelection}" SelectedIndexChanged="packagePicker_SelectedIndexChanged" />
-                </VerticalStackLayout>
-                <VerticalStackLayout>
-                    <Label  VerticalOptions="Center">Skip Game Version Check</Label>
-                    <CheckBox x:Name="mbfDevMode"  HorizontalOptions="Start" VerticalOptions="Center" IsChecked="{x:Static local:AppConfig.DevMode}" CheckedChanged="mbfDevMode_CheckedChanged"  />
-                </VerticalStackLayout>
-                <Button x:Name="TcpIpMode" Clicked="TcpIpMode_Clicked" Text="{x:Static local:AppResources.TcpIpMode}" />
-                <Button Clicked="restartAdbButton_Clicked" Text="{x:Static local:AppResources.RestartAdb}" />
-                <Button Clicked="launchDeveloperSettingsButton_Clicked" Text="{x:Static local:AppResources.LaunchDeveloperSettings}" />
-                <Button Clicked="launchSettingsButton_Clicked" Text="{x:Static local:AppResources.LaunchSettings}" />
-            </local:SpacedLayout>
-            <local:SpacedLayout x:Name="exitLayout">
-                <Button Clicked="exitApp_Clicked" Text="{x:Static local:AppResources.Exit}" />
-            </local:SpacedLayout>
-        </local:SpacedLayout>
+
+                <Border x:Name="statusLayout"
+                        Style="{StaticResource CardStyle}"
+                        IsVisible="True">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="18">
+                        <ActivityIndicator IsRunning="True"
+                                           Color="{StaticResource Primary}"
+                                           WidthRequest="44"
+                                           HeightRequest="44"
+                                           VerticalOptions="Center" />
+                        <VerticalStackLayout Grid.Column="1" Spacing="5">
+                            <Label Text="Preparing the connection"
+                                   Style="{StaticResource SectionTitleStyle}" />
+                            <Label Text="Checking device capabilities and the current ADB state. This usually takes only a moment."
+                                   Style="{StaticResource BodyStyle}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <Border x:Name="wifiLayout"
+                        Style="{StaticResource CardStyle}"
+                        IsVisible="False">
+                    <VerticalStackLayout Spacing="18">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Enable wireless debugging"
+                                   Style="{StaticResource SectionTitleStyle}" />
+                            <Label Text="{x:Static local:AppResources.EnableWirelessDebugging}"
+                                   Style="{StaticResource BodyStyle}" />
+                        </VerticalStackLayout>
+                        <Button Text="{x:Static local:AppResources.LaunchDeveloperSettings}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Clicked="launchDeveloperSettingsButton_Clicked" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border x:Name="wifiEnablingLayout"
+                        Style="{StaticResource CardStyle}"
+                        IsVisible="False">
+                    <VerticalStackLayout Spacing="18">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Authorize wireless debugging"
+                                   Style="{StaticResource SectionTitleStyle}" />
+                            <Label Text="{x:Static local:AppResources.WirelessDebuggingAuthorization}"
+                                   Style="{StaticResource BodyStyle}" />
+                        </VerticalStackLayout>
+                        <Button x:Name="cycleWifiDebugging"
+                                Text="{x:Static local:AppResources.TryAgain}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Clicked="cycleWifiDebugging_Clicked" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border x:Name="authorizationLayout"
+                        Style="{StaticResource CardStyle}"
+                        IsVisible="False">
+                    <VerticalStackLayout Spacing="18">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Approve this computer"
+                                   Style="{StaticResource SectionTitleStyle}" />
+                            <Label Text="Accept the debugging authorization prompt shown by Android, then retry the connection."
+                                   Style="{StaticResource BodyStyle}" />
+                        </VerticalStackLayout>
+                        <Button x:Name="restartAdbButton"
+                                Text="{x:Static local:AppResources.TryAgain}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Clicked="restartAdbButton_Clicked" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border x:Name="pairingLayout"
+                        Style="{StaticResource CardStyle}"
+                        IsVisible="False">
+                    <VerticalStackLayout Spacing="18">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Pair the device"
+                                   Style="{StaticResource SectionTitleStyle}" />
+                            <Label Text="{x:Static local:AppResources.PairingInstructions}"
+                                   Style="{StaticResource BodyStyle}" />
+                        </VerticalStackLayout>
+
+                        <Button Text="{x:Static local:AppResources.LaunchDeveloperSettings}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Clicked="launchDeveloperSettingsButton_Clicked" />
+
+                        <Grid ColumnDefinitions="150,*"
+                              RowDefinitions="Auto,Auto"
+                              ColumnSpacing="14"
+                              RowSpacing="12">
+                            <Label Grid.Row="0"
+                                   Grid.Column="0"
+                                   Text="{x:Static local:AppResources.PairingCode}"
+                                   Style="{StaticResource FieldLabelStyle}" />
+                            <Entry Grid.Row="0"
+                                   Grid.Column="1"
+                                   x:Name="pairingCodeEntry"
+                                   Style="{StaticResource EntryStyle}"
+                                   IsTextPredictionEnabled="False"
+                                   TextChanged="pairingCodeEntry_TextChanged"
+                                   Keyboard="Numeric" />
+
+                            <Label Grid.Row="1"
+                                   Grid.Column="0"
+                                   x:Name="portLabel"
+                                   Text="{x:Static local:AppResources.Port}"
+                                   Style="{StaticResource FieldLabelStyle}" />
+                            <Entry Grid.Row="1"
+                                   Grid.Column="1"
+                                   x:Name="portEntry"
+                                   Style="{StaticResource EntryStyle}"
+                                   IsTextPredictionEnabled="False"
+                                   Keyboard="Numeric" />
+                        </Grid>
+
+                        <Button x:Name="pairingConfirmButton"
+                                Text="{x:Static local:AppResources.Pair}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Clicked="pairingConfirmButton_Clicked" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border x:Name="connectLayout"
+                        Style="{StaticResource CardStyle}"
+                        IsVisible="False">
+                    <VerticalStackLayout Spacing="18">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Pairing complete"
+                                   Style="{StaticResource SectionTitleStyle}" />
+                            <Label Text="{x:Static local:AppResources.PairingSuccessful}"
+                                   Style="{StaticResource BodyStyle}" />
+                        </VerticalStackLayout>
+
+                        <Grid ColumnDefinitions="150,*" ColumnSpacing="14">
+                            <Label Grid.Column="0"
+                                   Text="{x:Static local:AppResources.Port}"
+                                   Style="{StaticResource FieldLabelStyle}" />
+                            <Entry Grid.Column="1"
+                                   x:Name="debugPortEntry"
+                                   Style="{StaticResource EntryStyle}"
+                                   IsTextPredictionEnabled="False"
+                                   Keyboard="Numeric" />
+                        </Grid>
+
+                        <Button x:Name="postPairingConnectButton"
+                                Text="{x:Static local:AppResources.Connect}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Clicked="postPairingConnectButton_Clicked" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border x:Name="connectedLayout"
+                        Style="{StaticResource CardStyle}"
+                        IsVisible="False">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="22">
+                        <VerticalStackLayout Spacing="7">
+                            <Label Text="Ready to launch"
+                                   Style="{StaticResource SectionTitleStyle}" />
+                            <Label Text="The device is connected and the local bridge is available."
+                                   Style="{StaticResource BodyStyle}" />
+                            <Label x:Name="devicesLabel"
+                                   Text="Connected device"
+                                   TextColor="{StaticResource Success}"
+                                   FontAttributes="Bold"
+                                   FontSize="13" />
+                        </VerticalStackLayout>
+                        <Button Grid.Column="1"
+                                Text="{x:Static local:AppResources.OpenBrowser}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                MinimumWidthRequest="190"
+                                VerticalOptions="Center"
+                                Clicked="openBrowserButton_Clicked" />
+                    </Grid>
+                </Border>
+
+                <Border x:Name="updateProgressContainer"
+                        Padding="20"
+                        IsVisible="False"
+                        Stroke="#315B6A"
+                        StrokeThickness="1"
+                        StrokeShape="RoundRectangle 18"
+                        BackgroundColor="#102733">
+                    <VerticalStackLayout Spacing="11">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label x:Name="updateStatusLabel"
+                                   Text="Downloading update…"
+                                   TextColor="{StaticResource TextPrimary}"
+                                   FontAttributes="Bold"
+                                   FontSize="14" />
+                            <Label Grid.Column="1"
+                                   x:Name="updatePercentLabel"
+                                   Text="0%"
+                                   TextColor="{StaticResource Primary}"
+                                   FontAttributes="Bold"
+                                   FontSize="13" />
+                        </Grid>
+                        <ProgressBar x:Name="updateProgressBar"
+                                     Progress="0"
+                                     ProgressColor="{StaticResource Primary}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border x:Name="developerLayout"
+                        Style="{StaticResource CardStyle}"
+                        IsVisible="False"
+                        BackgroundColor="#171C2C"
+                        Stroke="#3C405D">
+                    <VerticalStackLayout Spacing="16">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="Developer options"
+                                   Style="{StaticResource SectionTitleStyle}" />
+                            <Label Text="Advanced controls for diagnostics and testing."
+                                   Style="{StaticResource BodyStyle}" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="7">
+                            <Label Text="Selected game"
+                                   Style="{StaticResource FieldLabelStyle}" />
+                            <Picker x:Name="packagePicker"
+                                    Title="{x:Static local:AppResources.GameSelection}"
+                                    Style="{StaticResource PickerStyle}"
+                                    SelectedIndexChanged="packagePicker_SelectedIndexChanged" />
+                        </VerticalStackLayout>
+
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Skip game version check"
+                                       Style="{StaticResource FieldLabelStyle}" />
+                                <Label Text="Use only when validating an unreleased game build."
+                                       Style="{StaticResource CaptionStyle}" />
+                            </VerticalStackLayout>
+                            <CheckBox Grid.Column="1"
+                                      x:Name="mbfDevMode"
+                                      Color="{StaticResource Primary}"
+                                      VerticalOptions="Center"
+                                      IsChecked="{x:Static local:AppConfig.DevMode}"
+                                      CheckedChanged="mbfDevMode_CheckedChanged" />
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12" RowSpacing="12">
+                            <Button Grid.Row="0" Grid.Column="0"
+                                    x:Name="TcpIpMode"
+                                    Text="{x:Static local:AppResources.TcpIpMode}"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Clicked="TcpIpMode_Clicked" />
+                            <Button Grid.Row="0" Grid.Column="1"
+                                    Text="{x:Static local:AppResources.RestartAdb}"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Clicked="restartAdbButton_Clicked" />
+                            <Button Grid.Row="1" Grid.Column="0"
+                                    Text="{x:Static local:AppResources.LaunchDeveloperSettings}"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Clicked="launchDeveloperSettingsButton_Clicked" />
+                            <Button Grid.Row="1" Grid.Column="1"
+                                    Text="{x:Static local:AppResources.LaunchSettings}"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Clicked="launchSettingsButton_Clicked" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Grid x:Name="exitLayout"
+                      IsVisible="False"
+                      ColumnDefinitions="*,Auto">
+                    <Label Text="MBF Launcher keeps all bridge traffic on this device."
+                           Style="{StaticResource CaptionStyle}"
+                           VerticalTextAlignment="Center" />
+                    <Button Grid.Column="1"
+                            Text="{x:Static local:AppResources.Exit}"
+                            Style="{StaticResource DangerButtonStyle}"
+                            MinimumWidthRequest="130"
+                            Clicked="exitApp_Clicked" />
+                </Grid>
+            </VerticalStackLayout>
+        </Grid>
     </ScrollView>
 </ContentPage>

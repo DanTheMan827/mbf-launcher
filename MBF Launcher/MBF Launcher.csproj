@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
     <TargetFramework>net9.0-android</TargetFramework>
@@ -18,8 +18,9 @@
 		<!-- App Identifier -->
 		<ApplicationId>com.dantheman827.mbflauncher</ApplicationId>
 
-		<!-- Versions -->
-		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+		<!-- Versions. CI overrides these for tagged and branch builds. -->
+		<Version>0.0.0-dev.0</Version>
+		<ApplicationDisplayVersion>0.0.0-dev.0</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>
 
     <!-- To develop, package, and publish an app to the Microsoft Store, see: https://aka.ms/MauiTemplateUnpackaged -->
@@ -50,7 +51,7 @@
 		</MauiIcon>
 	
 		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\splash.png" Color="#A7D6EA" BaseSize="128,128" />
+		<MauiSplashScreen Include="Resources\Splash\splash.png" Color="#07111F" BaseSize="128,128" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />

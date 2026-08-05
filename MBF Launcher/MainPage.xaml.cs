@@ -1,4 +1,5 @@
-﻿using DanTheMan827.OnDeviceADB;
+using DanTheMan827.OnDeviceADB;
+using MBF_Launcher.Services;
 using MBF_Launcher.WebView;
 using System.Diagnostics;
 
@@ -21,6 +22,9 @@ namespace MBF_Launcher
         /// </summary>
         private bool launchedMbf = false;
 
+        private bool updateCheckStarted;
+        private bool updateCheckInProgress;
+
         private AdbWrapper.AdbDevice[] _devices = [];
         public AdbWrapper.AdbDevice[] Devices
         {
@@ -39,6 +43,7 @@ namespace MBF_Launcher
         {
             InitializeComponent();
 
+            versionLabel.Text = $"Version {AppInfo.VersionString}";
             BindingContext = this;
             Flow.OnMessage += this.Flow_OnMessage;
         }
@@ -276,6 +281,86 @@ namespace MBF_Launcher
             }
         });
 
+        private async Task CheckForUpdatesAsync(bool userInitiated)
+        {
+            if (updateCheckInProgress || AppInfo.Version == new Version(0,0,-1))
+            {
+                return;
+            }
+
+            updateCheckInProgress = true;
+            var downloadStarted = false;
+            checkForUpdatesButton.IsEnabled = false;
+            checkForUpdatesButton.Text = "Checking…";
+
+            try
+            {
+                var update = await UpdateService.CheckForUpdateAsync();
+                if (update is null)
+                {
+                    if (userInitiated)
+                    {
+                        await DisplayAlert(
+                            "You're up to date",
+                            $"MBF Launcher {AppInfo.VersionString} is the newest version available for this release channel.",
+                            "OK");
+                    }
+
+                    return;
+                }
+
+                var releaseChannel = update.IsPrerelease ? "prerelease" : "stable release";
+                var accepted = await DisplayAlert(
+                    "Update available",
+                    $"MBF Launcher {update.Version} is available as a {releaseChannel}. " +
+                    $"You are currently using {AppInfo.VersionString}.\n\n" +
+                    "Download the APK and open the Android installer?",
+                    "Download update",
+                    "Not now");
+
+                if (!accepted)
+                {
+                    return;
+                }
+
+                downloadStarted = true;
+                updateProgressContainer.IsVisible = true;
+                updateProgressBar.Progress = 0;
+                updatePercentLabel.Text = "0%";
+                updateStatusLabel.Text = $"Downloading MBF Launcher {update.Version}…";
+
+                var progress = new Progress<double>(value =>
+                {
+                    var boundedValue = Math.Clamp(value, 0, 1);
+                    updateProgressBar.Progress = boundedValue;
+                    updatePercentLabel.Text = $"{boundedValue:P0}";
+                });
+
+                var apkPath = await UpdateService.DownloadApkAsync(update, progress);
+                updateProgressBar.Progress = 1;
+                updatePercentLabel.Text = "100%";
+                updateStatusLabel.Text = "Opening the Android installer…";
+                UpdateService.OpenPackageInstaller(apkPath);
+            }
+            catch (Exception ex)
+            {
+                updateProgressContainer.IsVisible = false;
+                if (userInitiated || downloadStarted)
+                {
+                    await DisplayAlert(
+                        "Update failed",
+                        $"MBF Launcher could not complete the update. {ex.Message}",
+                        AppResources.AlertDismiss);
+                }
+            }
+            finally
+            {
+                updateCheckInProgress = false;
+                checkForUpdatesButton.IsEnabled = true;
+                checkForUpdatesButton.Text = "Check for updates";
+            }
+        }
+
         #region Event Handlers
         /// <summary>
         /// Called when the page is loaded
@@ -284,6 +369,12 @@ namespace MBF_Launcher
         /// <param name="e"></param>
         private void ContentPage_Loaded(object sender, EventArgs e)
         {
+            if (!updateCheckStarted)
+            {
+                updateCheckStarted = true;
+                _ = CheckForUpdatesAsync(userInitiated: false);
+            }
+
             if (App.IsPrimaryUser)
             {
                 Flow.SendState();
@@ -296,6 +387,9 @@ namespace MBF_Launcher
                 _ = ShowOneLayout(Layouts.Connected);
             }
         }
+
+        private async void checkForUpdatesButton_Clicked(object sender, EventArgs e)
+            => await CheckForUpdatesAsync(userInitiated: true);
 
         /// <summary>
         /// Called when the restart adb button is clicked
@@ -436,5 +530,4 @@ namespace MBF_Launcher
             AppConfig.DevMode = mbfDevMode.IsChecked;
         }
     }
-
 }
